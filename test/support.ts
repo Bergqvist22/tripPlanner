@@ -4,6 +4,7 @@ import * as legRoute from "@/app/api/trips/[tripId]/legs/[fromStopId]/[toStopId]
 import { GET as readLegs } from "@/app/api/trips/[tripId]/legs/route";
 import { GET as readMap } from "@/app/api/trips/[tripId]/map/route";
 import { GET as searchPlaces } from "@/app/api/trips/[tripId]/places/route";
+import { GET as readWarnings } from "@/app/api/trips/[tripId]/warnings/route";
 import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
 import * as itemsRoute from "@/app/api/trips/[tripId]/items/route";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
@@ -145,6 +146,7 @@ export function browser() {
     readBudget: (tripId: string) => send(readBudget, "GET", { tripId }),
     readMap: (tripId: string) => send(readMap, "GET", { tripId }),
     readLegs: (tripId: string) => send(readLegs, "GET", { tripId }),
+    readWarnings: (tripId: string) => send(readWarnings, "GET", { tripId }),
     updateLeg: (tripId: string, fromStopId: string, toStopId: string, changes: unknown) =>
       send(legRoute.PATCH, "PATCH", { tripId, fromStopId, toStopId }, changes),
     // Without a query nothing is searched for at all.

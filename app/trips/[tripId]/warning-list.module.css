@@ -1,0 +1,35 @@
+.warnings {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.warnings li {
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+
+.warnings a {
+  /* Tall enough for a thumb. */
+  display: block;
+  margin: -10px -14px;
+  padding: 10px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.warnings a:hover {
+  color: var(--accent);
+}
+
+.warnings a::after {
+  content: " →";
+  color: var(--muted);
+}

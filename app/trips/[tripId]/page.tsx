@@ -11,6 +11,7 @@ import { legsOf, travelOf } from "@/lib/legs";
 import { routeOf } from "@/lib/route";
 import { listStops } from "@/lib/stops";
 import { findTripSummary } from "@/lib/trips";
+import { warningsOf } from "@/lib/warnings";
 import { Section } from "@/app/section";
 import { AddStopForm } from "./add-stop-form";
 import { Budget } from "./budget";
@@ -21,6 +22,7 @@ import { StopList } from "./stop-list";
 import { travelTime } from "./travel";
 import { TripDetailsForm } from "./trip-details-form";
 import { UnlockForm } from "./unlock-form";
+import { WarningList } from "./warning-list";
 import styles from "./page.module.css";
 
 export default function TripPage({ params }: PageProps<"/trips/[tripId]">) {
@@ -64,6 +66,7 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
   await connection();
   const [conversion, legs] = await Promise.all([conversionFor(trip, items), legsOf(stops)]);
   const travel = travelOf(legs);
+  const warnings = warningsOf(stops, items);
   return (
     <>
       <TripHeader name={trip.name} creatorName={trip.creatorName} />
@@ -94,6 +97,11 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
       </dl>
       <div className={styles.layout}>
         <div className={styles.sections}>
+          {warnings.length > 0 && (
+            <Section className={styles.route} heading="Warnings">
+              <WarningList tripId={trip.id} warnings={warnings} summary />
+            </Section>
+          )}
           <Section className={styles.route} heading="Map">
             <RouteMap tripId={trip.id} route={routeOf(stops, legs)} />
           </Section>

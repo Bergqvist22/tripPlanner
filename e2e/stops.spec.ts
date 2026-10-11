@@ -54,8 +54,14 @@ test("a traveller lays out the Route of a Trip", async ({ page }) => {
   await expect(route(page).nth(1)).toContainText("Monterey Bay");
   await expect(route(page).nth(1)).toContainText("2 Jul 2027 – 4 Jul 2027");
   await expect(route(page).nth(1)).toContainText("2 nights");
+  // Nothing is booked for those nights yet, which the Trip warns about.
+  await expect(page.getByRole("region", { name: "Warnings" }).filter({ visible: true })).toContainText(
+    "Monterey Bay has 2 nights without Accommodation",
+  );
 
-  // Dragging with the mouse reorders them, and the new order is kept.
+  // Dragging with the mouse reorders them, and the new order is kept. The
+  // Route is further down the page than the window is tall.
+  await page.getByRole("button", { name: "Move Los Angeles" }).scrollIntoViewIfNeeded();
   const from = await middleOf(page, "Los Angeles");
   const to = await middleOf(page, "San Francisco");
   await page.mouse.move(from.x, from.y);

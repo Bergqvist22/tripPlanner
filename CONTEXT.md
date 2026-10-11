@@ -58,6 +58,10 @@ _Avoid_: Confirmed, reserved
 A Suggestion the group decided against, kept for reference rather than deleted.
 _Avoid_: Dismissed, declined, archived
 
+**Warning**:
+Something about where the group sleeps that it will want to look at: a night of a Stop that no Selected or Booked Accommodation covers, two that cover the same night, or one whose dates fall outside its Stop's. Worked out whenever a Trip is read, never stored.
+_Avoid_: Alert, error, conflict
+
 **Unscheduled**:
 An Item with no date. Items with a date are listed under that day of their Stop; a time of day is optional on top.
 _Avoid_: Undated, backlog

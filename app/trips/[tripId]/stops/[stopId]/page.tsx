@@ -5,10 +5,12 @@ import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
 import { conversionFor, displayCosts } from "@/lib/budget";
 import { listItems } from "@/lib/items";
-import { findStop } from "@/lib/stops";
+import { listStops } from "@/lib/stops";
+import { isAbout, warningsOf } from "@/lib/warnings";
 import { Section } from "@/app/section";
 import { ItemList } from "../../item-list";
 import { stopDates, stopNights } from "../../stop-dates";
+import { WarningList } from "../../warning-list";
 import styles from "../../page.module.css";
 import { DeleteStopForm } from "./delete-stop-form";
 import { StopDetailsForm } from "./stop-details-form";
@@ -36,9 +38,13 @@ async function Stop({ params }: Pick<Props, "params">) {
   }
 
   const { trip } = opened;
-  const stop = await findStop(trip, stopId);
+  const [stops, everyItem] = await Promise.all([listStops(trip), listItems(trip)]);
+  const stop = stops.find(({ id }) => id === stopId.toLowerCase());
   if (!stop) notFound();
-  const items = (await listItems(trip)).filter((item) => item.stopId === stop.id);
+  const items = everyItem.filter((item) => item.stopId === stop.id);
+  // Worked out for the whole Trip: an Accommodation elsewhere can cover a
+  // night here, or clash with one here.
+  const warnings = warningsOf(stops, everyItem).filter((warning) => isAbout(warning, stop.id));
   const conversion = await conversionFor(trip, items);
 
   return (
@@ -55,6 +61,11 @@ async function Stop({ params }: Pick<Props, "params">) {
       </header>
       <div className={styles.layout}>
         <div className={styles.sections}>
+          {warnings.length > 0 && (
+            <Section className={styles.route} heading="Warnings">
+              <WarningList tripId={trip.id} warnings={warnings} summary={false} />
+            </Section>
+          )}
           <Section className={styles.route} heading="Items">
             <ItemList
               tripId={trip.id}
