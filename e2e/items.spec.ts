@@ -65,7 +65,7 @@ test("a traveller collects Items on a Stop and on the Trip", async ({ page, cont
   await expect(inn.getByText("Copied")).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("MBI-881");
 
-  // Opening an Item shows a page where any field is edited.
+  // Opening an Item shows a page where any field is edited, and saved as it is.
   await inn.getByRole("link", { name: "Monterey Bay Inn" }).click();
   await expect(page.getByRole("heading", { name: "Monterey Bay Inn", level: 1 })).toBeVisible();
   await field(page, "Title").fill("Monterey Bay Inn & Spa");
@@ -73,13 +73,11 @@ test("a traveller collects Items on a Stop and on the Trip", async ({ page, cont
   await page.getByText("Notes", { exact: true }).filter({ visible: true }).click();
   await expect(page.getByRole("textbox", { name: "Notes" })).toBeFocused();
   await page.keyboard.type("Ocean view.");
-  await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Monterey Bay Inn & Spa", level: 1 })).toBeVisible();
 
   // Moving it to another Stop takes everything about it along.
   await field(page, "Belongs to").selectOption({ label: "Los Angeles" });
-  await page.getByRole("button", { name: "Save changes" }).click();
   await page.getByRole("link", { name: "← Los Angeles" }).click();
   const moved = items(page, "Items").getByRole("region", { name: "Accommodation" });
   await expect(moved).toContainText("Monterey Bay Inn & Spa");

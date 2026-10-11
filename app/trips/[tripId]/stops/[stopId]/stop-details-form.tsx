@@ -1,95 +1,50 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { SaveStatus, useAutosave } from "@/app/autosave";
 import { Field } from "@/app/field";
 import styles from "@/app/form.module.css";
 import type { Stop } from "@/lib/stops";
-import type { FieldErrors } from "@/lib/trips";
 
+function stopShown({ name, arrivalDate, departureDate, notes }: Stop) {
+  return { name, arrivalDate: arrivalDate ?? "", departureDate: departureDate ?? "", notes };
+}
+
+function stopEntered(typed: ReturnType<typeof stopShown>) {
+  return {
+    ...typed,
+    // An emptied date means it is not decided yet.
+    arrivalDate: typed.arrivalDate || null,
+    departureDate: typed.departureDate || null,
+  };
+}
+
+// Edits a Stop. Each change is saved as it is made.
 export function StopDetailsForm({ tripId, stop }: { tripId: string; stop: Stop }) {
-  const router = useRouter();
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  // What the form's fields were last known to hold on the server. Not the
-  // refreshed Stop: the fields keep what was typed, so comparing against a
-  // fellow traveller's newer value would send theirs back as a change.
-  const loaded = useRef(stop);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const fields = new FormData(event.currentTarget);
-    const entered = {
-      name: String(fields.get("name")),
-      // An emptied date means it is not decided yet.
-      arrivalDate: String(fields.get("arrivalDate")) || null,
-      departureDate: String(fields.get("departureDate")) || null,
-      notes: String(fields.get("notes")),
-    };
-    // Only what changed is sent, so a fellow traveller's change to another
-    // detail is not undone.
-    const changes = Object.fromEntries(
-      Object.entries(entered).filter(([detail, value]) => value !== loaded.current[detail as keyof typeof entered]),
-    );
-    setSaving(true);
-    setSaved(false);
-    setErrors({});
-    try {
-      const response = await fetch(`/api/trips/${tripId}/stops/${stop.id}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(changes),
-      });
-      if (response.status === 400) {
-        setErrors((await response.json()).errors);
-        return;
-      }
-      if (!response.ok) {
-        // Locked again or gone: the refreshed page shows which.
-        setErrors({ request: (await response.json()).error });
-        router.refresh();
-        return;
-      }
-      loaded.current = { ...loaded.current, ...changes };
-      setSaved(true);
-      router.refresh();
-    } catch {
-      setErrors({ request: "The changes could not be saved. Check your connection and try again." });
-    } finally {
-      setSaving(false);
-    }
-  }
+  const { errors, held, form, status } = useAutosave({
+    url: `/api/trips/${tripId}/stops/${stop.id}`,
+    name: "stop",
+    stored: stop,
+    shown: stopShown,
+    entered: stopEntered,
+  });
 
   return (
-    <form className={styles.form} onSubmit={submit} onChange={() => setSaved(false)} noValidate>
+    <form className={styles.form} {...form}>
       <Field label="Stop name" error={errors.name}>
-        <input name="name" required maxLength={100} defaultValue={stop.name} />
+        <input {...held("name")} required maxLength={100} />
       </Field>
       <div className={styles.row}>
         <Field label="Arrival" error={errors.arrivalDate}>
-          <input name="arrivalDate" type="date" defaultValue={stop.arrivalDate ?? ""} />
+          <input {...held("arrivalDate")} type="date" />
         </Field>
         <Field label="Departure" error={errors.departureDate}>
-          <input name="departureDate" type="date" defaultValue={stop.departureDate ?? ""} />
+          <input {...held("departureDate")} type="date" />
         </Field>
       </div>
       <Field label="Notes" error={errors.notes}>
-        <textarea name="notes" rows={6} maxLength={10000} defaultValue={stop.notes} />
+        <textarea {...held("notes")} rows={6} maxLength={10000} />
       </Field>
-      {errors.request && (
-        <p className={styles.error} role="alert">
-          {errors.request}
-        </p>
-      )}
-      <button className={styles.submit} type="submit" disabled={saving}>
-        {saving ? "Saving…" : "Save changes"}
-      </button>
-      {saved && (
-        <p className={styles.saved} role="status">
-          Saved.
-        </p>
-      )}
+      <SaveStatus {...status} />
     </form>
   );
 }

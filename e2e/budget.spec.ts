@@ -57,9 +57,8 @@ test("the Budget shows what the Trip costs and follows what the group decides", 
   await expect(budget(page).getByRole("region", { name: "Suggestions" })).toHaveCount(0);
 
   // Two travellers buy two tickets and split the room in two.
-  await field(page, "Travellers").fill("2");
   save = saved(page);
-  await page.getByRole("button", { name: "Save changes" }).click();
+  await field(page, "Travellers").fill("2");
   await save;
   await expect(budget(page)).toContainText("TotalSEK 12,201.00");
   await expect(budget(page)).toContainText("Per personSEK 6,100.50");
@@ -131,9 +130,8 @@ test("an Item priced in another currency shows both prices and counts converted"
   await expect(budget(page)).not.toContainText("out of date");
 
   // In dollars the flight needs no converting and the insurance does.
-  await field(page, "Display currency").selectOption("USD");
   const save = saved(page);
-  await page.getByRole("button", { name: "Save changes" }).click();
+  await field(page, "Display currency").selectOption("USD");
   await save;
   await expect(budget(page)).toContainText("TotalUSD 2,000.00");
   await expect(budget(page).getByRole("region", { name: "Suggestions" })).toContainText("USD 112.50");

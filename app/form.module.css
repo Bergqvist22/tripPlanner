@@ -90,7 +90,15 @@
 }
 
 .saved {
+  /* Room for one line, so the form does not jump when it appears. */
+  min-height: 1.5em;
   margin: 0;
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+.unsaved {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
 }

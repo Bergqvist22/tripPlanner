@@ -11,9 +11,9 @@ import { listStops } from "@/lib/stops";
 import { Section } from "@/app/section";
 import styles from "../../page.module.css";
 import { StatusPicker } from "../../status-picker";
-import { ItemForm } from "../item-form";
 import { listedOn } from "../listed-on";
 import { DeleteItemForm } from "./delete-item-form";
+import { ItemDetailsForm } from "./item-details-form";
 
 type Props = PageProps<"/trips/[tripId]/items/[itemId]">;
 
@@ -57,7 +57,7 @@ async function Item({ params }: Pick<Props, "params">) {
       </header>
       <div className={styles.layout}>
         <Section className={`${styles.card} ${styles.wide}`} heading="Item details">
-          <ItemForm
+          <ItemDetailsForm
             tripId={trip.id}
             stops={stops.map(({ id, name }) => ({ id, name }))}
             currencies={CURRENCIES}

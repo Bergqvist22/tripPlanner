@@ -36,12 +36,13 @@ test("a traveller lays out the Route of a Trip", async ({ page }) => {
   await field(page, "Stop name").fill("Monterey Bay");
   await field(page, "Arrival").fill("2027-07-02");
   await field(page, "Departure").fill("2027-07-01");
-  await page.getByRole("button", { name: "Save changes" }).click();
+  // Each change is saved as it is made, and what is refused is said at once.
   await expect(page.getByText("Departure cannot be before arrival")).toBeVisible();
+  await expect(page.getByText("Not everything is saved.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /save/i })).toHaveCount(0);
 
   await field(page, "Departure").fill("2027-07-04");
   await field(page, "Notes").fill("Aquarium opens at 10.");
-  await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Monterey Bay", level: 1 })).toBeVisible();
   await expect(page.getByText("2 Jul 2027 – 4 Jul 2027 · 2 nights")).toBeVisible();

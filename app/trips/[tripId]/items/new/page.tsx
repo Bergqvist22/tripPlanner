@@ -6,8 +6,8 @@ import { openTrip, unlockCookieName } from "@/lib/access";
 import { CURRENCIES } from "@/lib/currency";
 import { listStops } from "@/lib/stops";
 import styles from "../../page.module.css";
-import { ItemForm } from "../item-form";
 import { listedOn } from "../listed-on";
+import { NewItemForm } from "./new-item-form";
 
 type Props = PageProps<"/trips/[tripId]/items/new">;
 
@@ -47,13 +47,13 @@ async function NewItem({ params, searchParams }: Props) {
         <p>Anything you might book or do. A Category and a title are enough to begin with.</p>
       </header>
       <section className={`${styles.card} ${styles.wide}`} aria-label="New Item">
-        <ItemForm
+        <NewItemForm
           // A fresh form for each place an Item is added from.
           key={stop?.id ?? "trip"}
           tripId={trip.id}
           stops={stops.map(({ id, name }) => ({ id, name }))}
           currencies={CURRENCIES}
-          item={{ stopId: stop?.id ?? null, currency: trip.displayCurrency }}
+          start={{ stopId: stop?.id ?? null, currency: trip.displayCurrency }}
         />
       </section>
     </>
