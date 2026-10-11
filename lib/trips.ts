@@ -5,7 +5,7 @@ import { z } from "zod";
 import { isCurrency } from "./currency";
 import { hashPassword, PASSWORD_MAX_LENGTH } from "./password";
 
-const requiredText = (message: string) => z.string({ error: message }).trim().min(1, message).max(100);
+export const requiredText = (message: string) => z.string({ error: message }).trim().min(1, message).max(100);
 
 const tripDetailsSchema = z.object({
   name: requiredText("Give the Trip a name"),
@@ -40,7 +40,7 @@ export type TripChanges = z.infer<typeof tripChangesSchema>;
 // One message per field that was wrong.
 export type FieldErrors = Record<string, string>;
 
-function fieldErrors(error: z.ZodError): FieldErrors {
+export function fieldErrors(error: z.ZodError): FieldErrors {
   const errors: FieldErrors = {};
   for (const issue of error.issues) {
     errors[String(issue.path[0] ?? "request")] ??= issue.message;

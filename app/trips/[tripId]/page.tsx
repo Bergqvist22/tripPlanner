@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
 import { CURRENCIES } from "@/lib/currency";
+import { listStops } from "@/lib/stops";
 import { findTripSummary } from "@/lib/trips";
+import { AddStopForm } from "./add-stop-form";
 import { DeleteTripForm } from "./delete-trip-form";
+import { StopList } from "./stop-list";
 import { TripDetailsForm } from "./trip-details-form";
 import { UnlockForm } from "./unlock-form";
 import styles from "./page.module.css";
@@ -45,6 +48,7 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
   }
 
   const { trip } = opened;
+  const stops = await listStops(trip);
   return (
     <>
       <TripHeader name={trip.name} creatorName={trip.creatorName} />
@@ -58,18 +62,27 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
           <dd>{trip.displayCurrency}</dd>
         </div>
       </dl>
-      <div className={styles.sections}>
-        <section className={styles.card} aria-labelledby="details-heading">
-          <h2 id="details-heading">Trip details</h2>
-          <TripDetailsForm trip={trip} currencies={CURRENCIES} />
+      <div className={styles.layout}>
+        <section className={styles.route} aria-labelledby="route-heading">
+          <h2 id="route-heading">Route</h2>
+          <StopList tripId={trip.id} stops={stops} />
+          <div className={styles.card}>
+            <AddStopForm tripId={trip.id} />
+          </div>
         </section>
-        <section className={styles.card} aria-labelledby="delete-heading">
-          <h2 id="delete-heading">Delete this Trip</h2>
-          <p className={styles.lead}>
-            This removes the Trip and everything in it for good. Enter the Trip password to confirm.
-          </p>
-          <DeleteTripForm tripId={trip.id} />
-        </section>
+        <div className={styles.sections}>
+          <section className={styles.card} aria-labelledby="details-heading">
+            <h2 id="details-heading">Trip details</h2>
+            <TripDetailsForm trip={trip} currencies={CURRENCIES} />
+          </section>
+          <section className={styles.card} aria-labelledby="delete-heading">
+            <h2 id="delete-heading">Delete this Trip</h2>
+            <p className={styles.lead}>
+              This removes the Trip and everything in it for good. Enter the Trip password to confirm.
+            </p>
+            <DeleteTripForm tripId={trip.id} />
+          </section>
+        </div>
       </div>
     </>
   );

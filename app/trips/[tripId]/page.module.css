@@ -53,9 +53,21 @@
   font-weight: 600;
 }
 
+.layout,
 .sections {
   display: grid;
   gap: 24px;
+}
+
+.route {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  align-content: start;
+}
+
+.route h2 {
+  font-size: 1.35rem;
 }
 
 .card {
@@ -68,6 +80,11 @@
   border-radius: var(--radius);
 }
 
+/* Room for a form with notes. */
+.wide {
+  max-width: none;
+}
+
 .card h2 {
   font-size: 1.35rem;
   margin-bottom: 14px;
@@ -78,14 +95,14 @@
   color: var(--muted);
 }
 
-/* Desktop: details and deletion side by side. */
+/* Desktop: the Route takes the room, the Trip's own details sit beside it. */
 @media (min-width: 860px) {
   .page {
     padding-top: 40px;
   }
 
-  .sections {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 380px;
     column-gap: 48px;
     align-items: start;
   }

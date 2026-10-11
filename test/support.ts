@@ -1,5 +1,8 @@
 import { sql } from "drizzle-orm";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
+import * as stopRoute from "@/app/api/trips/[tripId]/stops/[stopId]/route";
+import { PUT as reorderStops } from "@/app/api/trips/[tripId]/stops/order/route";
+import * as stopsRoute from "@/app/api/trips/[tripId]/stops/route";
 import { POST as unlockTrip } from "@/app/api/trips/[tripId]/unlock/route";
 import { GET, POST } from "@/app/api/trips/route";
 import { db } from "@/db/client";
@@ -45,10 +48,10 @@ export async function createdTripId(overrides: Record<string, unknown> = {}) {
 export function browser() {
   const cookies = new Map<string, string>();
 
-  async function send(
-    handler: (request: Request, context: { params: Promise<{ tripId: string }> }) => Promise<Response>,
+  async function send<Params extends { tripId: string }>(
+    handler: (request: Request, context: { params: Promise<Params> }) => Promise<Response>,
     method: string,
-    tripId: string,
+    params: Params,
     body?: unknown,
   ) {
     const headers = new Headers({ "content-type": "application/json" });
@@ -56,12 +59,12 @@ export function browser() {
       headers.set("cookie", [...cookies].map(([name, value]) => `${name}=${value}`).join("; "));
     }
     const response = await handler(
-      new Request(`http://localhost/api/trips/${tripId}`, {
+      new Request(`http://localhost/api/trips/${params.tripId}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
       }),
-      { params: Promise.resolve({ tripId }) },
+      { params: Promise.resolve(params) },
     );
     for (const cookie of response.headers.getSetCookie()) {
       const [name, value] = cookie.split(";")[0].split("=");
@@ -72,10 +75,17 @@ export function browser() {
 
   return {
     cookies,
-    unlock: (tripId: string, password: unknown) => send(unlockTrip, "POST", tripId, { password }),
-    readTrip: (tripId: string) => send(tripRoute.GET, "GET", tripId),
-    updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", tripId, changes),
-    deleteTrip: (tripId: string, password: unknown) => send(tripRoute.DELETE, "DELETE", tripId, { password }),
+    unlock: (tripId: string, password: unknown) => send(unlockTrip, "POST", { tripId }, { password }),
+    readTrip: (tripId: string) => send(tripRoute.GET, "GET", { tripId }),
+    updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", { tripId }, changes),
+    deleteTrip: (tripId: string, password: unknown) => send(tripRoute.DELETE, "DELETE", { tripId }, { password }),
+    addStop: (tripId: string, stop: unknown) => send(stopsRoute.POST, "POST", { tripId }, stop),
+    listStops: (tripId: string) => send(stopsRoute.GET, "GET", { tripId }),
+    reorderStops: (tripId: string, stopIds: unknown) => send(reorderStops, "PUT", { tripId }, { stopIds }),
+    readStop: (tripId: string, stopId: string) => send(stopRoute.GET, "GET", { tripId, stopId }),
+    updateStop: (tripId: string, stopId: string, changes: unknown) =>
+      send(stopRoute.PATCH, "PATCH", { tripId, stopId }, changes),
+    deleteStop: (tripId: string, stopId: string) => send(stopRoute.DELETE, "DELETE", { tripId, stopId }),
   };
 }
 
