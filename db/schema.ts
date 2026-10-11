@@ -43,6 +43,10 @@ export const trips = pgTable(
     passwordHash: text().notNull(),
     travellerCount: integer().notNull(),
     displayCurrency: text().notNull(),
+    // Rate limiting of unlock attempts: how many wrong Trip passwords have
+    // been given since the current window opened.
+    wrongPasswordCount: integer().notNull().default(0),
+    wrongPasswordsSince: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check("trips_traveller_count_at_least_1", sql`${t.travellerCount} >= 1`)],

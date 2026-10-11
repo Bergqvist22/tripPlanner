@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { CURRENCIES } from "@/lib/currency";
 import { listTrips } from "@/lib/trips";
@@ -35,9 +36,11 @@ async function TripList() {
   return (
     <ul className={styles.list}>
       {trips.map((trip) => (
-        <li key={trip.id} className={styles.trip}>
-          <span className={styles.tripName}>{trip.name}</span>
-          <span className={styles.tripCreator}>Created by {trip.creatorName}</span>
+        <li key={trip.id}>
+          <Link className={styles.trip} href={`/trips/${trip.id}`}>
+            <span className={styles.tripName}>{trip.name}</span>
+            <span className={styles.tripCreator}>Created by {trip.creatorName}</span>
+          </Link>
         </li>
       ))}
     </ul>

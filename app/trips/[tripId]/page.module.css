@@ -1,0 +1,96 @@
+.page {
+  display: grid;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px var(--gutter) 56px;
+}
+
+.back {
+  justify-self: start;
+  /* Tall enough for a thumb. */
+  padding: 10px 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--accent);
+}
+
+.header h1 {
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.loading {
+  margin: 0;
+  color: var(--muted);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 40px;
+  margin: 0;
+}
+
+.facts dt {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.sections {
+  display: grid;
+  gap: 24px;
+}
+
+.card {
+  /* Keeps the unlock form a readable width on a desktop. */
+  max-width: 520px;
+  min-width: 0;
+  padding: 20px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.card h2 {
+  font-size: 1.35rem;
+  margin-bottom: 14px;
+}
+
+.lead {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+/* Desktop: details and deletion side by side. */
+@media (min-width: 860px) {
+  .page {
+    padding-top: 40px;
+  }
+
+  .sections {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 48px;
+    align-items: start;
+  }
+
+  .card {
+    padding: 24px;
+  }
+}

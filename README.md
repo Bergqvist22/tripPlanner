@@ -4,7 +4,7 @@ A web app for planning a trip together with the people you are travelling with. 
 
 It is built for a small group planning one or two trips, for example a California road trip, rather than as a public product.
 
-> **Status:** in development. So far a traveller can create a Trip and see it on the home page; the rest of the list below is being built ticket by ticket.
+> **Status:** in development. So far a traveller can create a Trip, open it with its Trip password, change its details and delete it; the rest of the list below is being built ticket by ticket.
 
 ## What it does
 
@@ -45,6 +45,7 @@ npm run dev                  # http://localhost:3000
 | Command | What it does |
 | --- | --- |
 | `npm test` | Starts Postgres in Docker, creates a fresh test database and runs the whole suite through the server API |
+| `npm run test:e2e` | Runs the browser tests in `e2e/` with Playwright against a production build on port 3100, using the test database. First time: `npx playwright install chromium` |
 | `npm run typecheck` | Type-checks the project |
 | `npm run lint` | Lints the project |
 | `npm run db:generate` | Writes a new migration after `db/schema.ts` has changed |

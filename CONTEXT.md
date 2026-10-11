@@ -80,6 +80,10 @@ Whether an Item's cost covers the whole group (a hotel room) or one traveller (a
 The single password, set when a Trip is created, that everyone travelling shares to view and edit it. There are no accounts.
 _Avoid_: Login, account, user
 
+**Unlock**:
+What a browser holds for a Trip after the Trip password has been given in it: the Trip stays open there across visits. A Trip without one is locked and shows only its name and creator name. An unlock is for one Trip and identifies nobody.
+_Avoid_: Session, login, sign in
+
 **Creator name**:
 The free-text name of whoever created a Trip, shown on the home page. It identifies nobody and grants nothing.
 _Avoid_: Owner, user, author

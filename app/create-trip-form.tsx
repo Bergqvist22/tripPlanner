@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import styles from "./create-trip-form.module.css";
-
-type Errors = Record<string, string>;
+import type { FieldErrors } from "@/lib/trips";
+import { Field } from "./field";
+import styles from "./form.module.css";
 
 export function CreateTripForm({ currencies }: { currencies: readonly string[] }) {
   const router = useRouter();
-  const [errors, setErrors] = useState<Errors>({});
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -89,32 +89,5 @@ export function CreateTripForm({ currencies }: { currencies: readonly string[] }
         {saving ? "Creating…" : "Create Trip"}
       </button>
     </form>
-  );
-}
-
-function Field({
-  label,
-  name,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  name: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={styles.field}>
-      <label htmlFor={name}>{label}</label>
-      {children}
-      {hint && !error && <p className={styles.hint}>{hint}</p>}
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-    </div>
   );
 }

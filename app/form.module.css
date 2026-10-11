@@ -60,3 +60,14 @@
   opacity: 0.6;
   cursor: progress;
 }
+
+.danger {
+  color: var(--surface);
+  background: var(--danger);
+}
+
+.saved {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
