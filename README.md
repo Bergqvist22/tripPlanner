@@ -4,7 +4,7 @@ A web app for planning a trip together with the people you are travelling with. 
 
 It is built for a small group planning one or two trips, for example a California road trip, rather than as a public product.
 
-> **Status:** planning. The domain model and the main decisions are written down, but there is no application code yet.
+> **Status:** in development. So far a traveller can create a Trip and see it on the home page; the rest of the list below is being built ticket by ticket.
 
 ## What it does
 
@@ -28,7 +28,36 @@ The whole app is in English.
 
 ## Tech
 
-Next.js and TypeScript, hosted on Vercel, with Postgres for storage.
+Next.js and TypeScript, hosted on Vercel, with Postgres for storage (Drizzle ORM, SQL migrations in `db/migrations/`).
+
+## Development
+
+Needs Node 24 and Docker.
+
+```sh
+npm install
+cp .env.example .env.local   # points at the Postgres in docker-compose.yml
+npm run db:up                # start Postgres in Docker
+npm run db:migrate           # create or update the tables
+npm run dev                  # http://localhost:3000
+```
+
+| Command | What it does |
+| --- | --- |
+| `npm test` | Starts Postgres in Docker, creates a fresh test database and runs the whole suite through the server API |
+| `npm run typecheck` | Type-checks the project |
+| `npm run lint` | Lints the project |
+| `npm run db:generate` | Writes a new migration after `db/schema.ts` has changed |
+
+## Deployment
+
+The app deploys to Vercel with a hosted Postgres database (Neon's free tier, see ADR 0001).
+
+1. Import the repository as a project on Vercel.
+2. Add a Postgres database to the project (Storage → Neon) or create one at neon.tech, and make sure the project has a `DATABASE_URL` environment variable holding its connection string.
+3. Deploy. `vercel.json` makes every build run `npm run db:migrate` before `next build`, so the tables are created and kept up to date by deploying.
+
+Preview deployments run migrations too, so give them their own database (a Neon branch) or limit `DATABASE_URL` to the Production environment.
 
 ## Documentation
 
