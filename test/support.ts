@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { GET as readBudget } from "@/app/api/trips/[tripId]/budget/route";
 import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
 import * as itemsRoute from "@/app/api/trips/[tripId]/items/route";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
@@ -80,6 +81,7 @@ export function browser() {
     unlock: (tripId: string, password: unknown) => send(unlockTrip, "POST", { tripId }, { password }),
     readTrip: (tripId: string) => send(tripRoute.GET, "GET", { tripId }),
     updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", { tripId }, changes),
+    readBudget: (tripId: string) => send(readBudget, "GET", { tripId }),
     deleteTrip: (tripId: string, password: unknown) => send(tripRoute.DELETE, "DELETE", { tripId }, { password }),
     addStop: (tripId: string, stop: unknown) => send(stopsRoute.POST, "POST", { tripId }, stop),
     listStops: (tripId: string) => send(stopsRoute.GET, "GET", { tripId }),

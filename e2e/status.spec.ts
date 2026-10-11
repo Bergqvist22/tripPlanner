@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { unlockedTrip } from "./support";
+import { saved as statusSaved, unlockedTrip } from "./support";
 
 // A Trip with three Accommodations to choose between in Monterey, opened on that Stop's page.
 async function stopWithSuggestions(page: Page) {
@@ -23,10 +23,6 @@ function accommodations(page: Page) {
 
 function status(item: Locator, name: string) {
   return item.getByRole("button", { name, exact: true });
-}
-
-function statusSaved(page: Page) {
-  return page.waitForResponse((response) => response.request().method() === "PATCH" && response.ok());
 }
 
 // How the Item's card is drawn: dashed for a Suggestion, solid once decided on.

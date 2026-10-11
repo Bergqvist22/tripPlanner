@@ -1,0 +1,95 @@
+.budget {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.budget dl,
+.budget dd,
+.budget h3 {
+  margin: 0;
+}
+
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px 32px;
+}
+
+.totals dt {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.totals dd {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.totals .total {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.6rem, 6vw, 2.1rem);
+  line-height: 1.15;
+}
+
+.note {
+  margin: -8px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.breakdown,
+.suggestions {
+  display: grid;
+  gap: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.budget h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.breakdown dl > div,
+.suggestions dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 6px 0;
+}
+
+.breakdown dt,
+.suggestions dt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.breakdown dd,
+.suggestions dd {
+  flex: none;
+  display: grid;
+  justify-items: end;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget small {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Still undecided, like the Suggestions themselves: outlined, not counted. */
+.suggestions {
+  padding: 12px 14px;
+  border: 1px dashed var(--muted);
+  border-radius: var(--radius);
+}

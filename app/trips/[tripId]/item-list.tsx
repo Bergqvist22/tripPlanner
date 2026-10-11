@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useId, useState } from "react";
 import { CATEGORIES, CATEGORY_NAMES } from "@/lib/categories";
+import { formattedCost } from "@/lib/currency";
 import type { Item } from "@/lib/items";
 import type { Status } from "@/lib/statuses";
 import { CopyButton } from "./copy-button";
@@ -12,8 +13,7 @@ import styles from "./item-list.module.css";
 
 function itemCost({ cost, currency, costBasis }: Item) {
   if (cost === null) return undefined;
-  const amount = new Intl.NumberFormat("en-GB", { style: "currency", currency, currencyDisplay: "code" }).format(cost);
-  return `${amount} ${costBasis === "total" ? "total" : "per person"}`;
+  return `${formattedCost(cost, currency)} ${costBasis === "total" ? "total" : "per person"}`;
 }
 
 function itemDates({ category, date, endDate }: Item) {

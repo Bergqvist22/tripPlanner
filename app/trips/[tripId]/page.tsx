@@ -3,12 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
+import { budgetOf } from "@/lib/budget";
 import { CURRENCIES } from "@/lib/currency";
 import { listItems } from "@/lib/items";
 import { listStops } from "@/lib/stops";
 import { findTripSummary } from "@/lib/trips";
 import { Section } from "@/app/section";
 import { AddStopForm } from "./add-stop-form";
+import { Budget } from "./budget";
 import { DeleteTripForm } from "./delete-trip-form";
 import { ItemList } from "./item-list";
 import { StopList } from "./stop-list";
@@ -84,6 +86,9 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
           </Section>
         </div>
         <div className={styles.sections}>
+          <Section className={styles.card} heading="Budget">
+            <Budget budget={budgetOf(trip, stops, items)} />
+          </Section>
           <Section className={styles.card} heading="Trip details">
             <TripDetailsForm trip={trip} currencies={CURRENCIES} />
           </Section>

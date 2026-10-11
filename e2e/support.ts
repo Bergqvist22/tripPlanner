@@ -6,6 +6,11 @@ export function field(page: Page, label: string, options?: { exact?: boolean }) 
   return page.getByLabel(label, options).filter({ visible: true });
 }
 
+// Resolves once a change made on the page has been saved.
+export function saved(page: Page) {
+  return page.waitForResponse((response) => response.request().method() === "PATCH" && response.ok());
+}
+
 const password = "golden-gate";
 
 // A Trip with these Stops, already unlocked in the page's browser.
