@@ -1,0 +1,109 @@
+name: Update project board
+
+# When an issue is closed, move it to Implemented on the project board and
+# move every issue it was blocking to Ready, once all of that issue's blockers
+# are closed.
+#
+# Needs a repository secret PROJECT_TOKEN: a classic personal access token with
+# the `project` scope. The default GITHUB_TOKEN cannot reach a board owned by a
+# user account.
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: read
+
+env:
+  PROJECT_OWNER: Bergqvist22
+  PROJECT_NUMBER: 2
+
+jobs:
+  update-board:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const closed = context.payload.issue.number;
+
+            const { user } = await github.graphql(
+              `query($login: String!, $number: Int!) {
+                user(login: $login) {
+                  projectV2(number: $number) {
+                    id
+                    field(name: "Status") {
+                      ... on ProjectV2SingleSelectField { id options { id name } }
+                    }
+                  }
+                }
+              }`,
+              { login: process.env.PROJECT_OWNER, number: Number(process.env.PROJECT_NUMBER) },
+            );
+            const project = user.projectV2;
+            const optionId = (name) => {
+              const option = project.field.options.find((o) => o.name === name);
+              if (!option) throw new Error(`The board has no "${name}" column`);
+              return option.id;
+            };
+
+            // Moves an issue's card to a column. With `onlyFrom`, the card is
+            // left alone unless it currently sits in that column.
+            const move = async (number, to, onlyFrom) => {
+              const { repository } = await github.graphql(
+                `query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    issue(number: $number) {
+                      projectItems(first: 20) {
+                        nodes {
+                          id
+                          project { id }
+                          fieldValueByName(name: "Status") {
+                            ... on ProjectV2ItemFieldSingleSelectValue { name }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }`,
+                { owner, repo, number },
+              );
+              const item = repository.issue.projectItems.nodes.find((n) => n.project.id === project.id);
+              if (!item) return core.info(`#${number} is not on the board`);
+              const from = item.fieldValueByName?.name;
+              if (onlyFrom && from !== onlyFrom) {
+                return core.info(`#${number} is in "${from}", not "${onlyFrom}"; left alone`);
+              }
+              await github.graphql(
+                `mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project, itemId: $item, fieldId: $field,
+                    value: { singleSelectOptionId: $option }
+                  }) { projectV2Item { id } }
+                }`,
+                { project: project.id, item: item.id, field: project.field.id, option: optionId(to) },
+              );
+              core.info(`#${number}: ${from} -> ${to}`);
+            };
+
+            await move(closed, "Implemented");
+
+            const blocking = await github.paginate(
+              "GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocking",
+              { owner, repo, issue_number: closed },
+            );
+            for (const issue of blocking.filter((i) => i.state === "open")) {
+              const blockers = await github.paginate(
+                "GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by",
+                { owner, repo, issue_number: issue.number },
+              );
+              const open = blockers.filter((b) => b.state === "open").map((b) => `#${b.number}`);
+              if (open.length) {
+                core.info(`#${issue.number} is still blocked by ${open.join(", ")}`);
+                continue;
+              }
+              await move(issue.number, "Ready", "Blocked");
+            }
