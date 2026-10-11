@@ -1,9 +1,10 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
-import { category, costBasis, items } from "@/db/schema";
+import { category, costBasis, items, status } from "@/db/schema";
 import { z } from "zod";
 import type { Category } from "./categories";
 import { isCurrency } from "./currency";
+import type { Status } from "./statuses";
 import { stopStaysOnRoute } from "./stops";
 import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
 
@@ -62,11 +63,15 @@ const itemDetailsSchema = z.object({
   notes: z.string({ error: "Notes must be text" }).max(10_000, "Notes can be at most 10,000 characters"),
 });
 
+// A new Item is a Suggestion, so it has no Status to give.
 const newItemSchema = itemDetailsSchema.partial().required({ category: true, title: true });
 
 // Only the fields that are sent are changed. Sending a Stop, or none, moves
-// the Item.
-const itemChangesSchema = itemDetailsSchema.partial();
+// the Item. Its Status is changed the same way, and is its own: nothing
+// happens to any other Item.
+const itemChangesSchema = itemDetailsSchema
+  .extend({ status: z.enum(status.enumValues, "Choose a Status") })
+  .partial();
 
 export type NewItem = z.infer<typeof newItemSchema>;
 export type ItemChanges = z.infer<typeof itemChangesSchema>;
@@ -110,6 +115,7 @@ export type Item = {
   stopId: string | null;
   category: Category;
   title: string;
+  status: Status;
   cost: number | null;
   currency: string;
   costBasis: "total" | "per_person";
@@ -121,9 +127,10 @@ export type Item = {
 };
 
 function itemContents(stored: typeof items.$inferSelect): Item {
-  const { id, stopId, category, title, currency, costBasis, date, endDate, link, bookingReference, notes } = stored;
+  const { id, stopId, category, title, status, currency, costBasis, date, endDate, link, bookingReference, notes } =
+    stored;
   const cost = stored.cost === null ? null : Number(stored.cost);
-  return { id, stopId, category, title, cost, currency, costBasis, date, endDate, link, bookingReference, notes };
+  return { id, stopId, category, title, status, cost, currency, costBasis, date, endDate, link, bookingReference, notes };
 }
 
 // The cost is stored as an exact decimal.

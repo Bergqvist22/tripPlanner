@@ -20,6 +20,8 @@
 
 .list {
   display: grid;
+  /* Side by side where there is room, so Suggestions can be compared. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
   gap: 10px;
   margin: 0;
   padding: 0;
@@ -35,6 +37,29 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+
+/* A Suggestion is an idea, nothing decided: an outline on the page, not a card. */
+/* A card is drawn after the Status marked on it, so it changes with the tap. */
+.item:has([aria-pressed="true"][data-status="suggestion"]) {
+  background: none;
+  border-style: dashed;
+  border-color: var(--muted);
+}
+
+/* What the group has decided on is marked along its edge, like a Stop. */
+.item:has([aria-pressed="true"][data-status="selected"]),
+.item:has([aria-pressed="true"][data-status="booked"]) {
+  border-left: 4px solid var(--accent);
+}
+
+.item:has([aria-pressed="true"][data-status="rejected"]) {
+  background: none;
+  color: var(--muted);
+}
+
+.item:has([aria-pressed="true"][data-status="rejected"]) .title {
+  text-decoration: line-through;
 }
 
 .title {
@@ -108,4 +133,17 @@
   color: var(--muted);
   border: 1px dashed var(--line);
   border-radius: var(--radius);
+}
+
+.showRejected {
+  justify-self: start;
+  min-height: 44px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
 }

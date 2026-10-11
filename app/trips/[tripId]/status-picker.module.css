@@ -1,0 +1,54 @@
+.picker {
+  /* The four choices share one row, also in a narrow card. */
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, auto));
+  justify-content: start;
+  gap: 4px;
+  max-width: 100%;
+  margin-top: 4px;
+}
+
+.choice {
+  /* Tall enough for a thumb. */
+  min-height: 44px;
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.choice[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* A Suggestion is still open, so its mark is as dashed as its card. */
+.choice[aria-pressed="true"][data-status="suggestion"] {
+  border-style: dashed;
+}
+
+.choice[aria-pressed="true"][data-status="selected"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.choice[aria-pressed="true"][data-status="booked"] {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.choice[aria-pressed="true"][data-status="rejected"] {
+  text-decoration: line-through;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}

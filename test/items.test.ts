@@ -53,6 +53,7 @@ describe("adding an Item", () => {
       stopId: null,
       category: "flight",
       title: "Stockholm to San Francisco",
+      status: "suggestion",
       cost: null,
       // Until told otherwise an Item is priced in the Trip's display currency.
       currency: "SEK",
@@ -329,7 +330,7 @@ describe("editing an Item", () => {
 
     const response = await emil.updateItem(tripId, item.id, changes);
 
-    const changed = { id: item.id, stopId: null, ...changes };
+    const changed = { id: item.id, stopId: null, status: "suggestion", ...changes };
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ item: changed });
     expect(await itemAsRead(emil, tripId, item.id)).toEqual(changed);

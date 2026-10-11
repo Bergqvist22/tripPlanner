@@ -6,9 +6,11 @@ import { openTrip, unlockCookieName } from "@/lib/access";
 import { CATEGORY_NAMES } from "@/lib/categories";
 import { CURRENCIES } from "@/lib/currency";
 import { findItem } from "@/lib/items";
+import { STATUS_NAMES } from "@/lib/statuses";
 import { listStops } from "@/lib/stops";
 import { Section } from "@/app/section";
 import styles from "../../page.module.css";
+import { StatusPicker } from "../../status-picker";
 import { ItemForm } from "../item-form";
 import { listedOn } from "../listed-on";
 import { DeleteItemForm } from "./delete-item-form";
@@ -49,7 +51,8 @@ async function Item({ params }: Pick<Props, "params">) {
       <header className={styles.header}>
         <h1>{item.title}</h1>
         <p>
-          {CATEGORY_NAMES[item.category]} · {stop ? `At ${stop.name}` : "For the whole Trip"}
+          {CATEGORY_NAMES[item.category]} · {STATUS_NAMES[item.status]} ·{" "}
+          {stop ? `At ${stop.name}` : "For the whole Trip"}
         </p>
       </header>
       <div className={styles.layout}>
@@ -61,9 +64,14 @@ async function Item({ params }: Pick<Props, "params">) {
             item={item}
           />
         </Section>
-        <Section className={styles.card} heading="Delete this Item">
-          <DeleteItemForm tripId={trip.id} item={item} />
-        </Section>
+        <div className={styles.sections}>
+          <Section className={styles.card} heading="Status">
+            <StatusPicker tripId={trip.id} item={item} />
+          </Section>
+          <Section className={styles.card} heading="Delete this Item">
+            <DeleteItemForm tripId={trip.id} item={item} />
+          </Section>
+        </div>
       </div>
     </>
   );
