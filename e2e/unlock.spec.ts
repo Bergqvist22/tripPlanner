@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { field } from "./support";
 
 const password = "golden-gate";
 
@@ -22,16 +23,16 @@ test("a traveller unlocks a Trip and stays unlocked", async ({ page, context, br
   await expect(page.getByRole("heading", { name: "Trip details" })).toHaveCount(0);
 
   // The wrong one gets a clear message and shows nothing.
-  await page.getByLabel("Trip password").fill("alcatraz");
+  await field(page, "Trip password").fill("alcatraz");
   await page.getByRole("button", { name: "Unlock Trip" }).click();
   await expect(page.getByText("That is not the Trip password. Try again.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Trip details" })).toHaveCount(0);
 
   // The right one shows the Trip.
-  await page.getByLabel("Trip password").fill(password);
+  await field(page, "Trip password").fill(password);
   await page.getByRole("button", { name: "Unlock Trip" }).click();
   await expect(page.getByRole("heading", { name: "Trip details" })).toBeVisible();
-  await expect(page.getByLabel("Display currency")).toHaveValue("SEK");
+  await expect(field(page, "Display currency")).toHaveValue("SEK");
 
   // It stays unlocked: on reload, in a new tab, and for months to come.
   await page.reload();

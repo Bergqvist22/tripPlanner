@@ -7,14 +7,14 @@ const dayMonthYear = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
-function formatted(date: string) {
+export function formattedDate(date: string) {
   return dayMonthYear.format(new Date(date));
 }
 
 export function stopDates({ arrivalDate, departureDate }: Pick<Stop, "arrivalDate" | "departureDate">) {
-  if (arrivalDate && departureDate) return `${formatted(arrivalDate)} – ${formatted(departureDate)}`;
-  if (arrivalDate) return `Arrives ${formatted(arrivalDate)}`;
-  if (departureDate) return `Leaves ${formatted(departureDate)}`;
+  if (arrivalDate && departureDate) return `${formattedDate(arrivalDate)} – ${formattedDate(departureDate)}`;
+  if (arrivalDate) return `Arrives ${formattedDate(arrivalDate)}`;
+  if (departureDate) return `Leaves ${formattedDate(departureDate)}`;
   return "No dates yet";
 }
 

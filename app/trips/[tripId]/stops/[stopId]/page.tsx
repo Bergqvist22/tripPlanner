@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
+import { listItems } from "@/lib/items";
 import { findStop } from "@/lib/stops";
+import { Section } from "@/app/section";
+import { ItemList } from "../../item-list";
 import { stopDates, stopNights } from "../../stop-dates";
 import styles from "../../page.module.css";
 import { DeleteStopForm } from "./delete-stop-form";
@@ -34,6 +37,7 @@ async function Stop({ params }: Pick<Props, "params">) {
   const { trip } = opened;
   const stop = await findStop(trip, stopId);
   if (!stop) notFound();
+  const items = (await listItems(trip)).filter((item) => item.stopId === stop.id);
 
   return (
     <>
@@ -48,14 +52,24 @@ async function Stop({ params }: Pick<Props, "params">) {
         </p>
       </header>
       <div className={styles.layout}>
-        <section className={`${styles.card} ${styles.wide}`} aria-labelledby="details-heading">
-          <h2 id="details-heading">Stop details</h2>
-          <StopDetailsForm tripId={trip.id} stop={stop} />
-        </section>
-        <section className={styles.card} aria-labelledby="delete-heading">
-          <h2 id="delete-heading">Delete this Stop</h2>
-          <DeleteStopForm tripId={trip.id} stop={stop} />
-        </section>
+        <div className={styles.sections}>
+          <Section className={styles.route} heading="Items">
+            <ItemList
+              tripId={trip.id}
+              items={items}
+              empty="No Items yet. Add where you might stay and what you might do here."
+            />
+            <Link className={styles.add} href={`/trips/${trip.id}/items/new?stop=${stop.id}`}>
+              Add Item
+            </Link>
+          </Section>
+          <Section className={`${styles.card} ${styles.wide}`} heading="Stop details">
+            <StopDetailsForm tripId={trip.id} stop={stop} />
+          </Section>
+        </div>
+        <Section className={styles.card} heading="Delete this Stop">
+          <DeleteStopForm tripId={trip.id} stop={stop} itemCount={items.length} />
+        </Section>
       </div>
     </>
   );

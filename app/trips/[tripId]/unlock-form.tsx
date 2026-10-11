@@ -36,8 +36,8 @@ export function UnlockForm({ tripId }: { tripId: string }) {
 
   return (
     <form className={styles.form} onSubmit={submit}>
-      <Field label="Trip password" name="password" error={error}>
-        <input id="password" name="password" type="password" required autoComplete="current-password" autoFocus />
+      <Field label="Trip password" error={error}>
+        <input name="password" type="password" required autoComplete="current-password" autoFocus />
       </Field>
       <button className={styles.submit} type="submit" disabled={unlocking}>
         {unlocking ? "Unlocking…" : "Unlock Trip"}

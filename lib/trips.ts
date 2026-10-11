@@ -7,6 +7,9 @@ import { hashPassword, PASSWORD_MAX_LENGTH } from "./password";
 
 export const requiredText = (message: string) => z.string({ error: message }).trim().min(1, message).max(100);
 
+// A calendar date, or null for one that is not decided yet.
+export const optionalDate = (message: string) => z.iso.date(message).nullable();
+
 const tripDetailsSchema = z.object({
   name: requiredText("Give the Trip a name"),
   creatorName: requiredText("Enter your name"),

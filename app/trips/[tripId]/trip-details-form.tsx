@@ -56,16 +56,15 @@ export function TripDetailsForm({ trip, currencies }: { trip: Trip; currencies: 
 
   return (
     <form className={styles.form} onSubmit={submit} onChange={() => setSaved(false)} noValidate>
-      <Field label="Trip name" name="name" error={errors.name}>
-        <input id="name" name="name" required maxLength={100} defaultValue={trip.name} />
+      <Field label="Trip name" error={errors.name}>
+        <input name="name" required maxLength={100} defaultValue={trip.name} />
       </Field>
-      <Field label="Creator name" name="creatorName" error={errors.creatorName}>
-        <input id="creatorName" name="creatorName" required maxLength={100} defaultValue={trip.creatorName} />
+      <Field label="Creator name" error={errors.creatorName}>
+        <input name="creatorName" required maxLength={100} defaultValue={trip.creatorName} />
       </Field>
       <div className={styles.row}>
-        <Field label="Travellers" name="travellerCount" error={errors.travellerCount}>
+        <Field label="Travellers" error={errors.travellerCount}>
           <input
-            id="travellerCount"
             name="travellerCount"
             type="number"
             inputMode="numeric"
@@ -75,8 +74,8 @@ export function TripDetailsForm({ trip, currencies }: { trip: Trip; currencies: 
             required
           />
         </Field>
-        <Field label="Display currency" name="displayCurrency" error={errors.displayCurrency}>
-          <select id="displayCurrency" name="displayCurrency" defaultValue={trip.displayCurrency} required>
+        <Field label="Display currency" error={errors.displayCurrency}>
+          <select name="displayCurrency" defaultValue={trip.displayCurrency} required>
             {currencies.map((currency) => (
               <option key={currency}>{currency}</option>
             ))}

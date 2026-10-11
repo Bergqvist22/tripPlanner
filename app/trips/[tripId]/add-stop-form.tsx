@@ -46,11 +46,10 @@ export function AddStopForm({ tripId }: { tripId: string }) {
     <form className={styles.form} onSubmit={submit} noValidate>
       <Field
         label="New Stop"
-        name="stopName"
         error={errors.name ?? errors.request}
         hint="A name is enough. Dates can follow later."
       >
-        <input id="stopName" name="stopName" required maxLength={100} placeholder="Monterey" />
+        <input name="stopName" required maxLength={100} placeholder="Monterey" />
       </Field>
       <button className={styles.submit} type="submit" disabled={adding}>
         {adding ? "Adding…" : "Add Stop"}

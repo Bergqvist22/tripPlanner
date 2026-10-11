@@ -63,19 +63,19 @@ export function StopDetailsForm({ tripId, stop }: { tripId: string; stop: Stop }
 
   return (
     <form className={styles.form} onSubmit={submit} onChange={() => setSaved(false)} noValidate>
-      <Field label="Stop name" name="name" error={errors.name}>
-        <input id="name" name="name" required maxLength={100} defaultValue={stop.name} />
+      <Field label="Stop name" error={errors.name}>
+        <input name="name" required maxLength={100} defaultValue={stop.name} />
       </Field>
       <div className={styles.row}>
-        <Field label="Arrival" name="arrivalDate" error={errors.arrivalDate}>
-          <input id="arrivalDate" name="arrivalDate" type="date" defaultValue={stop.arrivalDate ?? ""} />
+        <Field label="Arrival" error={errors.arrivalDate}>
+          <input name="arrivalDate" type="date" defaultValue={stop.arrivalDate ?? ""} />
         </Field>
-        <Field label="Departure" name="departureDate" error={errors.departureDate}>
-          <input id="departureDate" name="departureDate" type="date" defaultValue={stop.departureDate ?? ""} />
+        <Field label="Departure" error={errors.departureDate}>
+          <input name="departureDate" type="date" defaultValue={stop.departureDate ?? ""} />
         </Field>
       </div>
-      <Field label="Notes" name="notes" error={errors.notes}>
-        <textarea id="notes" name="notes" rows={6} maxLength={10000} defaultValue={stop.notes} />
+      <Field label="Notes" error={errors.notes}>
+        <textarea name="notes" rows={6} maxLength={10000} defaultValue={stop.notes} />
       </Field>
       {errors.request && (
         <p className={styles.error} role="alert">

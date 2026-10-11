@@ -4,10 +4,13 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
 import { CURRENCIES } from "@/lib/currency";
+import { listItems } from "@/lib/items";
 import { listStops } from "@/lib/stops";
 import { findTripSummary } from "@/lib/trips";
+import { Section } from "@/app/section";
 import { AddStopForm } from "./add-stop-form";
 import { DeleteTripForm } from "./delete-trip-form";
+import { ItemList } from "./item-list";
 import { StopList } from "./stop-list";
 import { TripDetailsForm } from "./trip-details-form";
 import { UnlockForm } from "./unlock-form";
@@ -38,17 +41,16 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
     return (
       <>
         <TripHeader name={summary.name} creatorName={summary.creatorName} />
-        <section className={styles.card} aria-labelledby="unlock-heading">
-          <h2 id="unlock-heading">This Trip is locked</h2>
+        <Section className={styles.card} heading="This Trip is locked">
           <p className={styles.lead}>Enter the Trip password to open it. This browser will remember it.</p>
           <UnlockForm tripId={tripId} />
-        </section>
+        </Section>
       </>
     );
   }
 
   const { trip } = opened;
-  const stops = await listStops(trip);
+  const [stops, items] = await Promise.all([listStops(trip), listItems(trip)]);
   return (
     <>
       <TripHeader name={trip.name} creatorName={trip.creatorName} />
@@ -63,25 +65,34 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
         </div>
       </dl>
       <div className={styles.layout}>
-        <section className={styles.route} aria-labelledby="route-heading">
-          <h2 id="route-heading">Route</h2>
-          <StopList tripId={trip.id} stops={stops} />
-          <div className={styles.card}>
-            <AddStopForm tripId={trip.id} />
-          </div>
-        </section>
         <div className={styles.sections}>
-          <section className={styles.card} aria-labelledby="details-heading">
-            <h2 id="details-heading">Trip details</h2>
+          <Section className={styles.route} heading="Route">
+            <StopList tripId={trip.id} stops={stops} />
+            <div className={styles.card}>
+              <AddStopForm tripId={trip.id} />
+            </div>
+          </Section>
+          <Section className={styles.route} heading="Items for the whole Trip">
+            <ItemList
+              tripId={trip.id}
+              items={items.filter((item) => item.stopId === null)}
+              empty="No Items yet. Flights, the rental car and anything else that is not tied to one Stop go here."
+            />
+            <Link className={styles.add} href={`/trips/${trip.id}/items/new`}>
+              Add Item
+            </Link>
+          </Section>
+        </div>
+        <div className={styles.sections}>
+          <Section className={styles.card} heading="Trip details">
             <TripDetailsForm trip={trip} currencies={CURRENCIES} />
-          </section>
-          <section className={styles.card} aria-labelledby="delete-heading">
-            <h2 id="delete-heading">Delete this Trip</h2>
+          </Section>
+          <Section className={styles.card} heading="Delete this Trip">
             <p className={styles.lead}>
               This removes the Trip and everything in it for good. Enter the Trip password to confirm.
             </p>
             <DeleteTripForm tripId={trip.id} />
-          </section>
+          </Section>
         </div>
       </div>
     </>

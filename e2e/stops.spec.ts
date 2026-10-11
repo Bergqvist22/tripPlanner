@@ -1,25 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-
-const password = "golden-gate";
-
-// A Trip with these Stops, already unlocked in the page's browser.
-async function unlockedTrip(page: Page, stopNames: string[] = []) {
-  const created = await page.request.post("/api/trips", {
-    data: {
-      name: `California road trip ${Date.now()}`,
-      creatorName: "Emil",
-      password,
-      travellerCount: 4,
-      displayCurrency: "SEK",
-    },
-  });
-  const tripId = (await created.json()).trip.id as string;
-  await page.request.post(`/api/trips/${tripId}/unlock`, { data: { password } });
-  for (const name of stopNames) {
-    await page.request.post(`/api/trips/${tripId}/stops`, { data: { name } });
-  }
-  return tripId;
-}
+import { field, unlockedTrip } from "./support";
 
 function route(page: Page) {
   return page.getByRole("region", { name: "Route" }).getByRole("listitem");
@@ -43,7 +23,7 @@ test("a traveller lays out the Route of a Trip", async ({ page }) => {
 
   // A name is all a Stop needs.
   for (const name of ["San Francisco", "Monterey", "Los Angeles"]) {
-    await page.getByLabel("New Stop").fill(name);
+    await field(page, "New Stop").fill(name);
     await page.getByRole("button", { name: "Add Stop" }).click();
     await expect(route(page).filter({ hasText: name })).toBeVisible();
   }
@@ -53,20 +33,20 @@ test("a traveller lays out the Route of a Trip", async ({ page }) => {
   // Opening a Stop shows a page for it, where its dates and notes are edited.
   await page.getByRole("link", { name: /Monterey/ }).click();
   await expect(page.getByRole("heading", { name: "Monterey", level: 1 })).toBeVisible();
-  await page.getByLabel("Stop name").fill("Monterey Bay");
-  await page.getByLabel("Arrival").fill("2027-07-02");
-  await page.getByLabel("Departure").fill("2027-07-01");
+  await field(page, "Stop name").fill("Monterey Bay");
+  await field(page, "Arrival").fill("2027-07-02");
+  await field(page, "Departure").fill("2027-07-01");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Departure cannot be before arrival")).toBeVisible();
 
-  await page.getByLabel("Departure").fill("2027-07-04");
-  await page.getByLabel("Notes").fill("Aquarium opens at 10.");
+  await field(page, "Departure").fill("2027-07-04");
+  await field(page, "Notes").fill("Aquarium opens at 10.");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Monterey Bay", level: 1 })).toBeVisible();
   await expect(page.getByText("2 Jul 2027 – 4 Jul 2027 · 2 nights")).toBeVisible();
   await page.reload();
-  await expect(page.getByLabel("Notes")).toHaveValue("Aquarium opens at 10.");
+  await expect(field(page, "Notes")).toHaveValue("Aquarium opens at 10.");
 
   // The Trip page shows the Stops in order with dates and nights.
   await page.getByRole("link", { name: /California road trip/ }).click();

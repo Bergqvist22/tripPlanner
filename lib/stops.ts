@@ -1,11 +1,8 @@
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { stops } from "@/db/schema";
+import { items, stops } from "@/db/schema";
 import { z } from "zod";
-import { fieldErrors, requiredText, type FieldErrors, type Trip } from "./trips";
-
-// A calendar date, or null for one that is not decided yet.
-const optionalDate = (message: string) => z.iso.date(message).nullable();
+import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
 
 const stopDetailsSchema = z.object({
   name: requiredText("Give the Stop a name"),
@@ -75,6 +72,15 @@ function onRoute(trip: Trip) {
 
 function isStopOf(trip: Trip, stopId: string) {
   return and(eq(stops.id, stopId), onRoute(trip));
+}
+
+type Transaction = Parameters<Parameters<ReturnType<typeof db>["transaction"]>[0]>[0];
+
+// Whether the Stop is on the Trip's Route. It is held there until the
+// transaction ends, so it cannot be deleted from under an Item being put on it.
+export async function stopStaysOnRoute(tx: Transaction, trip: Trip, stopId: string): Promise<boolean> {
+  const held = await tx.select({ id: stops.id }).from(stops).where(isStopOf(trip, stopId)).for("share");
+  return held.length > 0;
 }
 
 // Everything below is for a Trip that has already been opened (lib/access.ts).
@@ -162,14 +168,22 @@ export async function reorderStops(trip: Trip, stopIds: string[]): Promise<Stop[
 }
 
 // The Stop is marked as deleted rather than removed, so it can be restored
-// from Recently deleted. False when the Trip has no such Stop.
+// from Recently deleted. Its Items are marked with the same timestamp, which
+// is how restoring the Stop will know them. False when the Trip has no such Stop.
 export async function deleteStop(trip: Trip, stopId: string): Promise<boolean> {
   if (!stopIdSchema.safeParse(stopId).success) return false;
   const now = new Date();
-  const deleted = await db()
-    .update(stops)
-    .set({ deletedAt: now, updatedAt: now })
-    .where(isStopOf(trip, stopId))
-    .returning({ id: stops.id });
-  return deleted.length > 0;
+  return db().transaction(async (tx) => {
+    const deleted = await tx
+      .update(stops)
+      .set({ deletedAt: now, updatedAt: now })
+      .where(isStopOf(trip, stopId))
+      .returning({ id: stops.id });
+    if (deleted.length === 0) return false;
+    await tx
+      .update(items)
+      .set({ deletedAt: now, updatedAt: now })
+      .where(and(eq(items.stopId, stopId), isNull(items.deletedAt)));
+    return true;
+  });
 }

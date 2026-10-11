@@ -36,8 +36,8 @@ export function DeleteTripForm({ tripId }: { tripId: string }) {
 
   return (
     <form className={styles.form} onSubmit={submit}>
-      <Field label="Trip password" name="deletePassword" error={error}>
-        <input id="deletePassword" name="deletePassword" type="password" required autoComplete="off" />
+      <Field label="Trip password" error={error}>
+        <input name="deletePassword" type="password" required autoComplete="off" />
       </Field>
       <button className={`${styles.submit} ${styles.danger}`} type="submit" disabled={deleting}>
         {deleting ? "Deleting…" : "Delete Trip permanently"}

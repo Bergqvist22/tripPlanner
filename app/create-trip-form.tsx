@@ -45,24 +45,22 @@ export function CreateTripForm({ currencies }: { currencies: readonly string[] }
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <Field label="Trip name" name="name" error={errors.name}>
-        <input id="name" name="name" required maxLength={100} placeholder="California road trip" />
+      <Field label="Trip name" error={errors.name}>
+        <input name="name" required maxLength={100} placeholder="California road trip" />
       </Field>
-      <Field label="Your name" name="creatorName" error={errors.creatorName}>
-        <input id="creatorName" name="creatorName" required maxLength={100} autoComplete="name" />
+      <Field label="Your name" error={errors.creatorName}>
+        <input name="creatorName" required maxLength={100} autoComplete="name" />
       </Field>
       <Field
         label="Trip password"
-        name="password"
         error={errors.password}
         hint="Share it with everyone travelling. It cannot be recovered if lost."
       >
-        <input id="password" name="password" type="password" required maxLength={200} autoComplete="new-password" />
+        <input name="password" type="password" required maxLength={200} autoComplete="new-password" />
       </Field>
       <div className={styles.row}>
-        <Field label="Travellers" name="travellerCount" error={errors.travellerCount}>
+        <Field label="Travellers" error={errors.travellerCount}>
           <input
-            id="travellerCount"
             name="travellerCount"
             type="number"
             inputMode="numeric"
@@ -72,8 +70,8 @@ export function CreateTripForm({ currencies }: { currencies: readonly string[] }
             required
           />
         </Field>
-        <Field label="Display currency" name="displayCurrency" error={errors.displayCurrency}>
-          <select id="displayCurrency" name="displayCurrency" defaultValue="EUR" required>
+        <Field label="Display currency" error={errors.displayCurrency}>
+          <select name="displayCurrency" defaultValue="EUR" required>
             {currencies.map((currency) => (
               <option key={currency}>{currency}</option>
             ))}

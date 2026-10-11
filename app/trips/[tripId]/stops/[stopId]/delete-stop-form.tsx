@@ -5,7 +5,7 @@ import { useState } from "react";
 import styles from "@/app/form.module.css";
 import type { Stop } from "@/lib/stops";
 
-export function DeleteStopForm({ tripId, stop }: { tripId: string; stop: Stop }) {
+export function DeleteStopForm({ tripId, stop, itemCount }: { tripId: string; stop: Stop; itemCount: number }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -44,6 +44,11 @@ export function DeleteStopForm({ tripId, stop }: { tripId: string; stop: Stop })
   return (
     <div className={styles.form} role="group" aria-label="Confirm deleting the Stop">
       <p className={styles.question}>Delete {stop.name} from the Route?</p>
+      {itemCount > 0 && (
+        <p className={styles.hint}>
+          {itemCount === 1 ? "Its 1 Item is" : `Its ${itemCount} Items are`} deleted with it.
+        </p>
+      )}
       {error && (
         <p className={styles.error} role="alert">
           {error}

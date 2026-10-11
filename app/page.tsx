@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CURRENCIES } from "@/lib/currency";
 import { listTrips } from "@/lib/trips";
+import { Section } from "@/app/section";
 import { CreateTripForm } from "./create-trip-form";
 import styles from "./page.module.css";
 
@@ -13,17 +14,15 @@ export default function HomePage() {
         <p>Plan the route, compare what to book and see what it costs, together.</p>
       </header>
 
-      <section className={styles.trips} aria-labelledby="trips-heading">
-        <h2 id="trips-heading">Trips</h2>
+      <Section className={styles.trips} heading="Trips">
         <Suspense fallback={<p className={styles.empty}>Loading Trips…</p>}>
           <TripList />
         </Suspense>
-      </section>
+      </Section>
 
-      <section className={styles.create} aria-labelledby="create-heading">
-        <h2 id="create-heading">Start a new Trip</h2>
+      <Section className={styles.create} heading="Start a new Trip">
         <CreateTripForm currencies={CURRENCIES} />
-      </section>
+      </Section>
     </main>
   );
 }

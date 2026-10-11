@@ -1,4 +1,6 @@
 import { sql } from "drizzle-orm";
+import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
+import * as itemsRoute from "@/app/api/trips/[tripId]/items/route";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
 import * as stopRoute from "@/app/api/trips/[tripId]/stops/[stopId]/route";
 import { PUT as reorderStops } from "@/app/api/trips/[tripId]/stops/order/route";
@@ -86,6 +88,12 @@ export function browser() {
     updateStop: (tripId: string, stopId: string, changes: unknown) =>
       send(stopRoute.PATCH, "PATCH", { tripId, stopId }, changes),
     deleteStop: (tripId: string, stopId: string) => send(stopRoute.DELETE, "DELETE", { tripId, stopId }),
+    addItem: (tripId: string, item: unknown) => send(itemsRoute.POST, "POST", { tripId }, item),
+    listItems: (tripId: string) => send(itemsRoute.GET, "GET", { tripId }),
+    readItem: (tripId: string, itemId: string) => send(itemRoute.GET, "GET", { tripId, itemId }),
+    updateItem: (tripId: string, itemId: string, changes: unknown) =>
+      send(itemRoute.PATCH, "PATCH", { tripId, itemId }, changes),
+    deleteItem: (tripId: string, itemId: string) => send(itemRoute.DELETE, "DELETE", { tripId, itemId }),
   };
 }
 

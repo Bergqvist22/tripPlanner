@@ -1,0 +1,111 @@
+.groups {
+  display: grid;
+  gap: 18px;
+}
+
+.group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.group h3 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.title {
+  /* Tall enough for a thumb. */
+  padding: 6px 0;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.title:hover {
+  color: var(--accent);
+}
+
+.facts,
+.notes,
+.reference {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.link {
+  padding: 6px 0;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.reference {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 0.9rem;
+}
+
+.reference span {
+  color: var(--muted);
+}
+
+.reference code {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.copy {
+  min-height: 44px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.notes {
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.empty {
+  margin: 0;
+  padding: 20px 16px;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
