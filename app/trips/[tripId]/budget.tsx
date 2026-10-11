@@ -6,7 +6,7 @@ import styles from "./budget.module.css";
 // What the Trip costs, as the server summed it. Parts that cost nothing are
 // left out of a breakdown.
 export function Budget({ budget }: { budget: TripBudget }) {
-  const { displayCurrency, travellerCount, byStatus, suggestions } = budget;
+  const { displayCurrency, travellerCount, byStatus, suggestions, withoutRate } = budget;
   const cost = (amount: number) => formattedCost(amount, displayCurrency);
   const travellers = `${travellerCount} ${travellerCount === 1 ? "traveller" : "travellers"}`;
 
@@ -45,6 +45,17 @@ export function Budget({ budget }: { budget: TripBudget }) {
           ? "Nothing with a cost is Selected or Booked yet."
           : `Selected and Booked Items, for ${travellers}.`}
       </p>
+      {budget.ratesOutOfDate && (
+        <p className={styles.warning} role="status">
+          Exchange rates could not be updated, so costs converted to {displayCurrency} may be out of date.
+        </p>
+      )}
+      {withoutRate.length > 0 && (
+        <p className={styles.warning} role="status">
+          No exchange rate is known for {withoutRate.join(", ")}, so Items that need{" "}
+          {withoutRate.length === 1 ? "it" : "one of them"} converted are not counted.
+        </p>
+      )}
       {budget.total > 0 &&
         breakdowns.map(({ heading, parts }) => (
           <section key={heading} className={styles.breakdown} aria-label={heading}>

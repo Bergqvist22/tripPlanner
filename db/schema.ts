@@ -132,3 +132,11 @@ export const legs = pgTable(
   },
   (t) => [primaryKey({ columns: [t.fromStopId, t.toStopId] })],
 );
+
+// The last known exchange rate of each currency: how much of it one euro
+// buys. Converting between two currencies goes through the euro.
+export const exchangeRates = pgTable("exchange_rates", {
+  currency: text().primaryKey(),
+  perEuro: doublePrecision().notNull(),
+  fetchedAt: timestamp({ withTimezone: true }).notNull(),
+});

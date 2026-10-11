@@ -15,6 +15,13 @@
       "when": 1791683916073,
       "tag": "0001_unlock_rate_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791701120250,
+      "tag": "0002_exchange_rates",
+      "breakpoints": true
     }
   ]
 }

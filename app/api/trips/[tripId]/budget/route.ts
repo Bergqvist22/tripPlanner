@@ -1,5 +1,5 @@
 import { openTrip } from "@/lib/access";
-import { budgetOf } from "@/lib/budget";
+import { budgetOf, conversionFor } from "@/lib/budget";
 import { listItems } from "@/lib/items";
 import { listStops } from "@/lib/stops";
 import { refusedResponse, unlockFrom } from "../access";
@@ -10,5 +10,5 @@ export async function GET(request: Request, { params }: RouteContext<"/api/trips
   if ("refused" in opened) return refusedResponse(opened);
   const { trip } = opened;
   const [stops, items] = await Promise.all([listStops(trip), listItems(trip)]);
-  return Response.json({ budget: budgetOf(trip, stops, items) });
+  return Response.json({ budget: budgetOf(trip, stops, items, await conversionFor(trip, items)) });
 }

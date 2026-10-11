@@ -41,6 +41,16 @@
   color: var(--muted);
 }
 
+/* Something the figures above cannot be fully trusted on. */
+.warning {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+}
+
 .breakdown,
 .suggestions {
   display: grid;

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
-import { budgetOf } from "@/lib/budget";
+import { budgetOf, conversionFor, displayCosts } from "@/lib/budget";
 import { CURRENCIES } from "@/lib/currency";
 import { listItems } from "@/lib/items";
 import { listStops } from "@/lib/stops";
@@ -53,6 +53,7 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
 
   const { trip } = opened;
   const [stops, items] = await Promise.all([listStops(trip), listItems(trip)]);
+  const conversion = await conversionFor(trip, items);
   return (
     <>
       <TripHeader name={trip.name} creatorName={trip.creatorName} />
@@ -78,6 +79,8 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
             <ItemList
               tripId={trip.id}
               items={items.filter((item) => item.stopId === null)}
+              displayCurrency={trip.displayCurrency}
+              displayCosts={displayCosts(items, conversion)}
               empty="No Items yet. Flights, the rental car and anything else that is not tied to one Stop go here."
             />
             <Link className={styles.add} href={`/trips/${trip.id}/items/new`}>
@@ -87,7 +90,7 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
         </div>
         <div className={styles.sections}>
           <Section className={styles.card} heading="Budget">
-            <Budget budget={budgetOf(trip, stops, items)} />
+            <Budget budget={budgetOf(trip, stops, items, conversion)} />
           </Section>
           <Section className={styles.card} heading="Trip details">
             <TripDetailsForm trip={trip} currencies={CURRENCIES} />

@@ -14,7 +14,8 @@ export default defineConfig({
   webServer: {
     command: `tsx e2e/prepare-database.ts && next build && next start --port ${PORT}`,
     url: `http://localhost:${PORT}`,
-    env: { DATABASE_URL: TEST_DATABASE_URL },
+    // No test reaches the exchange-rate service: nothing answers at this address.
+    env: { DATABASE_URL: TEST_DATABASE_URL, EXCHANGE_RATES_URL: "http://127.0.0.1:9" },
     reuseExistingServer: false,
     timeout: 180_000,
   },

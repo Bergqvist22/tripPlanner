@@ -11,9 +11,12 @@ import { StatusPicker } from "./status-picker";
 import { formattedDate } from "./stop-dates";
 import styles from "./item-list.module.css";
 
-function itemCost({ cost, currency, costBasis }: Item) {
+// The price as the Item has it and, for one in another currency, what that
+// comes to in the display currency.
+function itemCost({ cost, currency, costBasis }: Item, displayCost: string | undefined) {
   if (cost === null) return undefined;
-  return `${formattedCost(cost, currency)} ${costBasis === "total" ? "total" : "per person"}`;
+  const price = [formattedCost(cost, currency), displayCost].filter(Boolean).join(" ≈ ");
+  return `${price} ${costBasis === "total" ? "total" : "per person"}`;
 }
 
 function itemDates({ category, date, endDate }: Item) {
@@ -35,8 +38,22 @@ function decidedFirst(a: Item, b: Item) {
 }
 
 // Items grouped by Category. Rejected Items are left out until asked for.
-// `empty` is what to say when there are no Items at all.
-export function ItemList({ tripId, items, empty }: { tripId: string; items: Item[]; empty: string }) {
+// `displayCosts` holds what the Items priced in another currency cost in the
+// display currency, by Item id. `empty` is what to say when there are no Items
+// at all.
+export function ItemList({
+  tripId,
+  items,
+  displayCurrency,
+  displayCosts,
+  empty,
+}: {
+  tripId: string;
+  items: Item[];
+  displayCurrency: string;
+  displayCosts: Record<string, number>;
+  empty: string;
+}) {
   const id = useId();
   const [showingRejected, setShowingRejected] = useState(false);
   if (items.length === 0) return <p className={styles.empty}>{empty}</p>;
@@ -57,7 +74,9 @@ export function ItemList({ tripId, items, empty }: { tripId: string; items: Item
             <h3 id={`${id}-${category}`}>{CATEGORY_NAMES[category]}</h3>
             <ul className={styles.list}>
               {group.map((item) => {
-                const facts = [itemCost(item), itemDates(item)].filter(Boolean);
+                const displayCost = displayCosts[item.id];
+                const converted = displayCost === undefined ? undefined : formattedCost(displayCost, displayCurrency);
+                const facts = [itemCost(item, converted), itemDates(item)].filter(Boolean);
                 return (
                   <li key={item.id} className={styles.item}>
                     <Link className={styles.title} href={`/trips/${tripId}/items/${item.id}`}>

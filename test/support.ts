@@ -9,9 +9,21 @@ import * as stopsRoute from "@/app/api/trips/[tripId]/stops/route";
 import { POST as unlockTrip } from "@/app/api/trips/[tripId]/unlock/route";
 import { GET, POST } from "@/app/api/trips/route";
 import { db } from "@/db/client";
+import { replaceRateSource, type RatesPerEuro } from "@/lib/exchange-rates";
 
 export async function emptyDatabase() {
-  await db().execute(sql`TRUNCATE trips CASCADE`);
+  await db().execute(sql`TRUNCATE trips, exchange_rates CASCADE`);
+}
+
+// The exchange-rate service, in memory. It answers with the rates it holds at
+// the time, which a test may change, and fails while it is down.
+export function exchangeRateService(rates: RatesPerEuro) {
+  const service = { rates, down: false };
+  replaceRateSource(async () => {
+    if (service.down) throw new Error("The exchange-rate service is down");
+    return service.rates;
+  });
+  return service;
 }
 
 const californiaRoadTrip = {

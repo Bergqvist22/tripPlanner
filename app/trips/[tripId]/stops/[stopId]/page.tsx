@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
+import { conversionFor, displayCosts } from "@/lib/budget";
 import { listItems } from "@/lib/items";
 import { findStop } from "@/lib/stops";
 import { Section } from "@/app/section";
@@ -38,6 +39,7 @@ async function Stop({ params }: Pick<Props, "params">) {
   const stop = await findStop(trip, stopId);
   if (!stop) notFound();
   const items = (await listItems(trip)).filter((item) => item.stopId === stop.id);
+  const conversion = await conversionFor(trip, items);
 
   return (
     <>
@@ -57,6 +59,8 @@ async function Stop({ params }: Pick<Props, "params">) {
             <ItemList
               tripId={trip.id}
               items={items}
+              displayCurrency={trip.displayCurrency}
+              displayCosts={displayCosts(items, conversion)}
               empty="No Items yet. Add where you might stay and what you might do here."
             />
             <Link className={styles.add} href={`/trips/${trip.id}/items/new?stop=${stop.id}`}>

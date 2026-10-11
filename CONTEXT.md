@@ -71,6 +71,10 @@ _Avoid_: Limit, cap, allowance
 **Display currency**:
 The single currency a Trip's Budget is shown in. Each Item keeps the currency it was priced in.
 
+**Exchange rate**:
+What one currency is worth in another on a given day. The Budget converts each Item with the latest one known, so it moves from day to day; no rate is frozen when an Item is added.
+_Avoid_: Conversion rate, FX
+
 **Total / Per person**:
 Whether an Item's cost covers the whole group (a hotel room) or one traveller (a flight ticket).
 

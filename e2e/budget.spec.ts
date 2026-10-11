@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { Client } from "pg";
+import { TEST_DATABASE_URL } from "../test/database";
 import { field, saved, unlockedTrip } from "./support";
 
 function budget(page: Page) {
@@ -80,4 +82,79 @@ test.describe("on a phone", () => {
     await expect(budget(page)).toContainText("SEK 39,999,999,999.96");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   });
+});
+
+// What one euro buys, as the exchange-rate service would have answered. The
+// service itself is out of reach of the server under test.
+async function knownRates(perEuro: Record<string, number>, fetchedAt: Date) {
+  const database = new Client({ connectionString: TEST_DATABASE_URL });
+  await database.connect();
+  await database.query("TRUNCATE exchange_rates");
+  for (const [currency, rate] of Object.entries(perEuro)) {
+    await database.query("INSERT INTO exchange_rates (currency, per_euro, fetched_at) VALUES ($1, $2, $3)", [
+      currency,
+      rate,
+      fetchedAt,
+    ]);
+  }
+  await database.end();
+}
+
+// The other tests are written for a server that knows no rates.
+test.afterEach(() => knownRates({}, new Date()));
+
+test("an Item priced in another currency shows both prices and counts converted", async ({ page }) => {
+  await knownRates({ EUR: 1, SEK: 10, USD: 1.25 }, new Date());
+  // Four travellers, with the display currency SEK.
+  const tripId = await unlockedTrip(page);
+  const add = (item: Record<string, unknown>) => page.request.post(`/api/trips/${tripId}/items`, { data: item });
+  const flight = await add({
+    category: "flight",
+    title: "Stockholm to San Francisco",
+    cost: 500,
+    currency: "USD",
+    costBasis: "per_person",
+  });
+  await add({ category: "other", title: "Travel insurance", cost: 900 });
+  const { item } = await flight.json();
+  await page.request.patch(`/api/trips/${tripId}/items/${item.id}`, { data: { status: "booked" } });
+
+  await page.goto(`/trips/${tripId}`);
+
+  const items = page.getByRole("listitem");
+  await expect(items.filter({ hasText: "Stockholm to San Francisco" })).toContainText(
+    "USD 500.00 ≈ SEK 4,000.00 per person",
+  );
+  await expect(items.filter({ hasText: "Travel insurance" })).toContainText("SEK 900.00 total");
+  await expect(items.filter({ hasText: "Travel insurance" })).not.toContainText("≈");
+  await expect(budget(page)).toContainText("TotalSEK 16,000.00");
+  await expect(budget(page)).not.toContainText("out of date");
+
+  // In dollars the flight needs no converting and the insurance does.
+  await field(page, "Display currency").selectOption("USD");
+  const save = saved(page);
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await save;
+  await expect(budget(page)).toContainText("TotalUSD 2,000.00");
+  await expect(budget(page).getByRole("region", { name: "Suggestions" })).toContainText("USD 112.50");
+  await expect(items.filter({ hasText: "Travel insurance" })).toContainText("SEK 900.00 ≈ USD 112.50 total");
+});
+
+test("the Budget says so when exchange rates may be out of date", async ({ page }) => {
+  await knownRates({ EUR: 1, SEK: 10, USD: 1.25 }, new Date(Date.now() - 3 * 24 * 60 * 60 * 1000));
+  const tripId = await unlockedTrip(page);
+  const added = await page.request.post(`/api/trips/${tripId}/items`, {
+    data: { category: "car_rental", title: "Convertible", cost: 100, currency: "USD" },
+  });
+  const { item } = await added.json();
+  await page.request.patch(`/api/trips/${tripId}/items/${item.id}`, { data: { status: "booked" } });
+  await page.request.post(`/api/trips/${tripId}/items`, {
+    data: { category: "food", title: "Fish market", cost: 5000, currency: "ISK" },
+  });
+
+  await page.goto(`/trips/${tripId}`);
+
+  await expect(budget(page)).toContainText("TotalSEK 800.00");
+  await expect(budget(page)).toContainText("may be out of date");
+  await expect(budget(page)).toContainText("No exchange rate is known for ISK");
 });

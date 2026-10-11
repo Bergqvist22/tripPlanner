@@ -4,7 +4,7 @@ A web app for planning a trip together with the people you are travelling with. 
 
 It is built for a small group planning one or two trips, for example a California road trip, rather than as a public product.
 
-> **Status:** in development. So far a traveller can create a Trip, open it with its Trip password, change its details and delete it, and lay out its Route: add Stops, give them dates and notes, reorder them by dragging and delete them, and add Items to a Stop or to the whole Trip, edit them, move them and delete them, give each Item a Status to compare Suggestions and record what was decided, and see the Budget: what the Selected and Booked Items cost in total and per person, by Category, by Stop and by Status, with every cost counted as if it were in the display currency (conversion between currencies comes next). The rest of the list below is being built ticket by ticket.
+> **Status:** in development. So far a traveller can create a Trip, open it with its Trip password, change its details and delete it, and lay out its Route: add Stops, give them dates and notes, reorder them by dragging and delete them, and add Items to a Stop or to the whole Trip, edit them, move them and delete them, give each Item a Status to compare Suggestions and record what was decided, and see the Budget: what the Selected and Booked Items cost in total and per person, by Category, by Stop and by Status, with each Item converted from the currency it was priced in to the display currency at a daily exchange rate. The rest of the list below is being built ticket by ticket.
 
 ## What it does
 
@@ -28,7 +28,7 @@ The whole app is in English.
 
 ## Tech
 
-Next.js and TypeScript, hosted on Vercel, with Postgres for storage (Drizzle ORM, SQL migrations in `db/migrations/`).
+Next.js and TypeScript, hosted on Vercel, with Postgres for storage (Drizzle ORM, SQL migrations in `db/migrations/`). Exchange rates come from [Frankfurter](https://frankfurter.dev), which is free and needs no key; they are fetched at most once a day and kept in the database, so the last known rates are used when the service cannot be reached.
 
 ## Development
 

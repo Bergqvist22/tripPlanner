@@ -1,7 +1,20 @@
-import { beforeEach, describe, expect, test } from "vitest";
-import { browser, emptyDatabase, unlockedTrip } from "./support";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { browser, emptyDatabase, exchangeRateService, unlockedTrip } from "./support";
+
+// One euro buys 10 kronor or 1.25 dollars, so a dollar is 8 kronor.
+let service: ReturnType<typeof exchangeRateService>;
 
 beforeEach(emptyDatabase);
+beforeEach(() => {
+  service = exchangeRateService({ EUR: 1, SEK: 10, USD: 1.25 });
+  // Only the clock is faked, so a day passes in no real time.
+  vi.useFakeTimers({ toFake: ["Date"] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+const HOUR = 60 * 60 * 1000;
 
 type Traveller = ReturnType<typeof browser>;
 type Amount = { total: number; perPerson: number };
@@ -113,14 +126,6 @@ describe("the Budget of a Trip", () => {
     await addedItem(emil, tripId, "suggestion", {});
 
     expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 20, perPerson: 10, suggestions: NOTHING });
-  });
-
-  test("treats every cost as if it were in the display currency", async () => {
-    const { tripId, emil } = await unlockedTrip({ travellerCount: 2, displayCurrency: "SEK" });
-    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
-    await addedItem(emil, tripId, "booked", { cost: 50, currency: "SEK" });
-
-    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 150, perPerson: 75, displayCurrency: "SEK" });
   });
 
   test("is broken down by Category, in the order Categories are listed", async () => {
@@ -250,13 +255,203 @@ describe("the Budget follows the Trip", () => {
     expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 2600, perPerson: 1300, travellerCount: 2 });
   });
 
-  test("when the display currency changes, in name only", async () => {
-    const { tripId, emil } = await unlockedTrip({ displayCurrency: "SEK" });
-    await addedItem(emil, tripId, "booked", { cost: 600 });
+  test("when the display currency changes", async () => {
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 2, displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 800, currency: "SEK" });
+    await addedItem(emil, tripId, "selected", { cost: 100, currency: "USD" });
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 1600, perPerson: 800, displayCurrency: "SEK" });
 
     await emil.updateTrip(tripId, { displayCurrency: "USD" });
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 200, perPerson: 100, displayCurrency: "USD" });
 
-    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 600, displayCurrency: "USD" });
+    await emil.updateTrip(tripId, { displayCurrency: "EUR" });
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 160, perPerson: 80, displayCurrency: "EUR" });
+  });
+});
+
+describe("the Budget across currencies", () => {
+  test("converts an Item from its own currency to the display currency", async () => {
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 2, displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+    await addedItem(emil, tripId, "booked", { cost: 50, currency: "SEK" });
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({
+      total: 850,
+      perPerson: 425,
+      displayCurrency: "SEK",
+      ratesOutOfDate: false,
+      withoutRate: [],
+    });
+  });
+
+  test("leaves the Item priced as it was", async () => {
+    const { tripId, emil } = await unlockedTrip({ displayCurrency: "SEK" });
+    const tour = await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+
+    await budgetAsRead(emil, tripId);
+
+    const { item } = await (await emil.readItem(tripId, tour.id)).json();
+    expect(item).toMatchObject({ cost: 100, currency: "USD" });
+  });
+
+  test("converts a per-person Item before multiplying it by the traveller count", async () => {
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 4, displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 100.1, currency: "USD", costBasis: "per_person" });
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 3203.2, perPerson: 800.8 });
+  });
+
+  test("rounds each converted cost to whole cents", async () => {
+    service.rates = { EUR: 1, SEK: 1, USD: 3 };
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 3, displayCurrency: "SEK" });
+    // A third of a krona each: 0.33, three times over.
+    await addedItem(emil, tripId, "booked", { cost: 1, currency: "USD", costBasis: "per_person" });
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 0.99, perPerson: 0.33 });
+  });
+
+  test("converts every breakdown and the Suggestions", async () => {
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 2, displayCurrency: "SEK" });
+    const monterey = await addedStop(emil, tripId, "Monterey");
+    await addedItem(emil, tripId, "booked", { stopId: monterey.id, category: "food", cost: 10, currency: "USD" });
+    await addedItem(emil, tripId, "selected", { category: "flight", cost: 30, currency: "EUR" });
+    await addedItem(emil, tripId, "suggestion", { cost: 5, currency: "USD", costBasis: "per_person" });
+
+    const budget = await budgetAsRead(emil, tripId);
+
+    expect(budget).toMatchObject({ total: 380, perPerson: 190 });
+    expect(budget.byStatus).toEqual({
+      booked: { total: 80, perPerson: 40 },
+      selected: { total: 300, perPerson: 150 },
+    });
+    expect(budget.byStop).toEqual([
+      { stopId: monterey.id, name: "Monterey", total: 80, perPerson: 40 },
+      { stopId: null, name: null, total: 300, perPerson: 150 },
+    ]);
+    expect(budget.byCategory.filter(({ total }: Amount) => total > 0)).toEqual([
+      { category: "flight", total: 300, perPerson: 150 },
+      { category: "food", total: 80, perPerson: 40 },
+    ]);
+    expect(budget.suggestions).toEqual({ total: 80, perPerson: 40 });
+  });
+});
+
+describe("exchange rates are fetched once a day", () => {
+  test("the rate fetched is used for the rest of the day, then a new one is fetched", async () => {
+    const { tripId, emil } = await unlockedTrip({ displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 800 });
+
+    service.rates = { EUR: 1, SEK: 11, USD: 1.25 };
+    vi.advanceTimersByTime(23 * HOUR);
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 800, ratesOutOfDate: false });
+
+    vi.advanceTimersByTime(2 * HOUR);
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 880, ratesOutOfDate: false });
+  });
+
+  test("a rate fetched for one Trip is used for another", async () => {
+    const first = await unlockedTrip({ displayCurrency: "SEK" });
+    await addedItem(first.emil, first.tripId, "booked", { cost: 100, currency: "USD" });
+    await budgetAsRead(first.emil, first.tripId);
+
+    service.down = true;
+    const second = await unlockedTrip({ displayCurrency: "USD" });
+    await addedItem(second.emil, second.tripId, "booked", { cost: 40, currency: "EUR" });
+
+    expect(await budgetAsRead(second.emil, second.tripId)).toMatchObject({ total: 50, ratesOutOfDate: false });
+  });
+
+  test("a Trip priced in its display currency alone needs no rates", async () => {
+    service.down = true;
+    const { tripId, emil } = await unlockedTrip({ displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 600, currency: "SEK" });
+    await addedItem(emil, tripId, "booked", { currency: "USD" });
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 600, ratesOutOfDate: false, withoutRate: [] });
+  });
+});
+
+describe("when no fresh exchange rate can be fetched", () => {
+  test("the last known rate is used and the Budget is marked as possibly out of date", async () => {
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 2, displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+    await budgetAsRead(emil, tripId);
+
+    service.down = true;
+    vi.advanceTimersByTime(3 * 24 * HOUR);
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({
+      total: 800,
+      perPerson: 400,
+      ratesOutOfDate: true,
+      withoutRate: [],
+    });
+  });
+
+  test("the Budget is up to date again once rates can be fetched", async () => {
+    const { tripId, emil } = await unlockedTrip({ displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+    await budgetAsRead(emil, tripId);
+    service.down = true;
+    vi.advanceTimersByTime(3 * 24 * HOUR);
+    await budgetAsRead(emil, tripId);
+
+    service.down = false;
+    service.rates = { EUR: 1, SEK: 11, USD: 1.25 };
+    // A service that failed is not asked again for a few minutes.
+    vi.advanceTimersByTime(HOUR);
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 880, ratesOutOfDate: false });
+  });
+
+  test("and none was ever fetched, the Items that cannot be converted are left out", async () => {
+    service.down = true;
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 2, displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+    await addedItem(emil, tripId, "suggestion", { cost: 70, currency: "EUR" });
+    await addedItem(emil, tripId, "booked", { cost: 50, currency: "SEK" });
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({
+      total: 50,
+      perPerson: 25,
+      suggestions: NOTHING,
+      ratesOutOfDate: true,
+      withoutRate: ["EUR", "SEK", "USD"],
+    });
+  });
+
+  test("for a currency the service does not know, its Items are left out and the rest is up to date", async () => {
+    const { tripId, emil } = await unlockedTrip({ travellerCount: 2, displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+    await addedItem(emil, tripId, "booked", { cost: 9000, currency: "ISK" });
+    await addedItem(emil, tripId, "rejected", { cost: 9000, currency: "JPY" });
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({
+      total: 800,
+      ratesOutOfDate: false,
+      withoutRate: ["ISK"],
+    });
+  });
+
+  test("for a display currency the service does not know, nothing can be converted to it", async () => {
+    const { tripId, emil } = await unlockedTrip({ displayCurrency: "ISK" });
+    await addedItem(emil, tripId, "booked", { cost: 100, currency: "USD" });
+    await addedItem(emil, tripId, "booked", { cost: 9000, currency: "ISK" });
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 9000, withoutRate: ["ISK"] });
+  });
+
+  test("a rate the service has since dropped is still used, and marked", async () => {
+    service.rates = { EUR: 1, SEK: 10, USD: 1.25, ISK: 125 };
+    const { tripId, emil } = await unlockedTrip({ displayCurrency: "SEK" });
+    await addedItem(emil, tripId, "booked", { cost: 1000, currency: "ISK" });
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 80, ratesOutOfDate: false });
+
+    service.rates = { EUR: 1, SEK: 10, USD: 1.25 };
+    vi.advanceTimersByTime(25 * HOUR);
+
+    expect(await budgetAsRead(emil, tripId)).toMatchObject({ total: 80, ratesOutOfDate: true, withoutRate: [] });
   });
 });
 

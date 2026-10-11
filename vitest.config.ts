@@ -9,7 +9,8 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
     globalSetup: "./test/global-setup.ts",
-    env: { DATABASE_URL: TEST_DATABASE_URL },
+    // No test reaches the exchange-rate service: nothing answers at this address.
+    env: { DATABASE_URL: TEST_DATABASE_URL, EXCHANGE_RATES_URL: "http://127.0.0.1:9" },
     // Every test file shares one database, so files run one at a time.
     fileParallelism: false,
   },
