@@ -2,6 +2,7 @@ import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { items, stops } from "@/db/schema";
 import { z } from "zod";
+import { placeSchema, type Place } from "./place-search";
 import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
 
 const stopDetailsSchema = z.object({
@@ -9,6 +10,8 @@ const stopDetailsSchema = z.object({
   arrivalDate: optionalDate("Enter a valid arrival date"),
   departureDate: optionalDate("Enter a valid departure date"),
   notes: z.string({ error: "Notes must be text" }).max(10_000, "Notes can be at most 10,000 characters"),
+  // Where the Stop is on the map, as the place search found it. Null takes it away.
+  place: z.union([z.null(), placeSchema], { error: "Choose a place from the ones the search found" }),
 });
 
 type StopDates = { arrivalDate: string | null; departureDate: string | null };
@@ -25,7 +28,7 @@ function departsBeforeArriving(dates: StopDates) {
 
 const DEPARTURE_BEFORE_ARRIVAL: FieldErrors = { departureDate: "Departure cannot be before arrival" };
 
-const newStopSchema = stopDetailsSchema.partial({ arrivalDate: true, departureDate: true, notes: true });
+const newStopSchema = stopDetailsSchema.partial({ arrivalDate: true, departureDate: true, notes: true, place: true });
 
 // Only the details that are sent are changed.
 const stopChangesSchema = stopDetailsSchema.partial();
@@ -49,7 +52,7 @@ export function parseStopChanges(input: unknown): { changes: StopChanges } | { e
 }
 
 // A Stop as travellers see it. Dates are calendar dates (YYYY-MM-DD); nights
-// is known once both are.
+// is known once both are. A Stop without a place is left off the map.
 export type Stop = {
   id: string;
   name: string;
@@ -57,10 +60,24 @@ export type Stop = {
   departureDate: string | null;
   nights: number | null;
   notes: string;
+  place: Place | null;
 };
 
-function stopContents({ id, name, arrivalDate, departureDate, notes }: typeof stops.$inferSelect): Stop {
-  return { id, name, arrivalDate, departureDate, nights: nights({ arrivalDate, departureDate }), notes };
+function stopContents(stored: typeof stops.$inferSelect): Stop {
+  const { id, name, arrivalDate, departureDate, notes } = stored;
+  const { placeLabel: label, placeLatitude: latitude, placeLongitude: longitude } = stored;
+  const place = label !== null && latitude !== null && longitude !== null ? { label, latitude, longitude } : null;
+  return { id, name, arrivalDate, departureDate, nights: nights({ arrivalDate, departureDate }), notes, place };
+}
+
+// A place as the columns that hold it. Nothing when the place is not sent.
+function placeColumns(place: Place | null | undefined) {
+  if (place === undefined) return {};
+  return {
+    placeLabel: place?.label ?? null,
+    placeLatitude: place?.latitude ?? null,
+    placeLongitude: place?.longitude ?? null,
+  };
 }
 
 const stopIdSchema = z.uuid();
@@ -86,11 +103,12 @@ export async function stopStaysOnRoute(tx: Transaction, trip: Trip, stopId: stri
 // Everything below is for a Trip that has already been opened (lib/access.ts).
 
 // A new Stop goes last on the Route.
-export async function addStop(trip: Trip, stop: NewStop): Promise<Stop> {
+export async function addStop(trip: Trip, { place, ...details }: NewStop): Promise<Stop> {
   const [added] = await db()
     .insert(stops)
     .values({
-      ...stop,
+      ...details,
+      ...placeColumns(place),
       tripId: trip.id,
       position: sql`(SELECT coalesce(max(position), -1) + 1 FROM stops WHERE trip_id = ${trip.id})`,
     })
@@ -130,9 +148,10 @@ export async function updateStop(
     if (!stored) return undefined;
     if (departsBeforeArriving({ ...stored, ...changes })) return { errors: DEPARTURE_BEFORE_ARRIVAL };
     if (Object.keys(changes).length === 0) return { stop: stopContents(stored) };
+    const { place, ...details } = changes;
     const [updated] = await tx
       .update(stops)
-      .set({ ...changes, updatedAt: new Date() })
+      .set({ ...details, ...placeColumns(place), updatedAt: new Date() })
       .where(eq(stops.id, stopId))
       .returning();
     return { stop: stopContents(updated) };

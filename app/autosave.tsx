@@ -180,6 +180,8 @@ export function useAutosave<Stored, Field extends string>({
     typed: current.typed,
     errors,
     change,
+    // Saves at once, for a change that was not made by typing in the form.
+    save: saveNow,
     // For an input, select or textarea of this name: it holds what was typed.
     held: (field: Field) => ({
       name: field,

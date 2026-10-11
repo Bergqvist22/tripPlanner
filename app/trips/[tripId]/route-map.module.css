@@ -1,0 +1,67 @@
+.overview {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.map {
+  /* Short enough on a phone to scroll past with a thumb beside it. */
+  height: 300px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* Keeps the map's own layers under whatever the page puts over it. */
+  isolation: isolate;
+  font: inherit;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.pin {
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+}
+
+.pin:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.line {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-opacity: 0.85;
+  fill: none;
+}
+
+/* What a pin says when it is opened. The popup itself stays light. */
+.about {
+  display: grid;
+  gap: 2px;
+  font-size: 0.95rem;
+}
+
+.about a {
+  font-weight: 600;
+  color: #a8431f;
+}
+
+.about span {
+  color: #4a5458;
+}
+
+@media (min-width: 860px) {
+  .map {
+    height: 420px;
+  }
+}

@@ -3,10 +3,23 @@
 import { SaveStatus, useAutosave } from "@/app/autosave";
 import { Field } from "@/app/field";
 import styles from "@/app/form.module.css";
+import type { Place } from "@/lib/place-search";
 import type { Stop } from "@/lib/stops";
+import { PlaceField } from "../../place-field";
 
-function stopShown({ name, arrivalDate, departureDate, notes }: Stop) {
-  return { name, arrivalDate: arrivalDate ?? "", departureDate: departureDate ?? "", notes };
+// A place as a field holds it: as text, the same for the same place.
+function placeShown(place: Place | null) {
+  if (!place) return "";
+  const { label, latitude, longitude } = place;
+  return JSON.stringify({ label, latitude, longitude });
+}
+
+function placeEntered(shown: string): Place | null {
+  return shown ? JSON.parse(shown) : null;
+}
+
+function stopShown({ name, arrivalDate, departureDate, notes, place }: Stop) {
+  return { name, arrivalDate: arrivalDate ?? "", departureDate: departureDate ?? "", notes, place: placeShown(place) };
 }
 
 function stopEntered(typed: ReturnType<typeof stopShown>) {
@@ -15,12 +28,13 @@ function stopEntered(typed: ReturnType<typeof stopShown>) {
     // An emptied date means it is not decided yet.
     arrivalDate: typed.arrivalDate || null,
     departureDate: typed.departureDate || null,
+    place: placeEntered(typed.place),
   };
 }
 
 // Edits a Stop. Each change is saved as it is made.
 export function StopDetailsForm({ tripId, stop }: { tripId: string; stop: Stop }) {
-  const { errors, held, form, status } = useAutosave({
+  const { typed, errors, held, change, save, form, status } = useAutosave({
     url: `/api/trips/${tripId}/stops/${stop.id}`,
     name: "stop",
     stored: stop,
@@ -41,6 +55,15 @@ export function StopDetailsForm({ tripId, stop }: { tripId: string; stop: Stop }
           <input {...held("departureDate")} type="date" />
         </Field>
       </div>
+      <PlaceField
+        tripId={tripId}
+        place={placeEntered(typed.place)}
+        error={errors.place}
+        onChange={(place) => {
+          change("place", placeShown(place));
+          save();
+        }}
+      />
       <Field label="Notes" error={errors.notes}>
         <textarea {...held("notes")} rows={6} maxLength={10000} />
       </Field>

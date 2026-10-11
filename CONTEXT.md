@@ -14,6 +14,10 @@ _Avoid_: Destination, journey, plan
 A place on the Trip's route with an arrival and departure date. A Stop may have zero nights (a lunch break along the way). The Stop owns its dates; Items under it do not define them.
 _Avoid_: Destination, city, location, waypoint
 
+**Place**:
+The point on the map a Stop is at, with the label the place search gave it. A Stop without one works everywhere except the map.
+_Avoid_: Location, address, coordinates
+
 **Leg**:
 The stretch between two consecutive Stops, with a travel mode and a travel time. For the Drive mode the time is calculated; it can always be overridden by hand.
 _Avoid_: Route, segment, transfer

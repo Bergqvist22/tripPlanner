@@ -31,6 +31,7 @@ describe("adding a Stop", () => {
       departureDate: null,
       nights: null,
       notes: "",
+      place: null,
     });
     expect(await stopsAsListed(emil, tripId)).toEqual([stop]);
   });
@@ -195,6 +196,7 @@ describe("editing a Stop", () => {
       departureDate: "2027-07-04",
       nights: 2,
       notes: "Aquarium opens at 10.\nBook the whale watching early.",
+      place: null,
     };
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ stop: changed });

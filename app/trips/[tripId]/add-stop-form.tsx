@@ -1,15 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Field } from "@/app/field";
 import styles from "@/app/form.module.css";
+import type { Place } from "@/lib/place-search";
 import type { FieldErrors } from "@/lib/trips";
+import { PlaceField } from "./place-field";
 
 export function AddStopForm({ tripId }: { tripId: string }) {
   const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [adding, setAdding] = useState(false);
+  const [place, setPlace] = useState<Place | null>(null);
+  const name = useRef<HTMLInputElement>(null);
+
+  // A Stop that has no name yet is named after the place found for it.
+  function choosePlace(chosen: Place | null) {
+    setPlace(chosen);
+    if (chosen && name.current && name.current.value.trim() === "") {
+      name.current.value = chosen.label.split(",")[0].slice(0, 100);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,7 +33,7 @@ export function AddStopForm({ tripId }: { tripId: string }) {
       const response = await fetch(`/api/trips/${tripId}/stops`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: fields.get("stopName") }),
+        body: JSON.stringify({ name: fields.get("stopName"), place }),
       });
       if (response.status === 400) {
         setErrors((await response.json()).errors);
@@ -34,6 +46,7 @@ export function AddStopForm({ tripId }: { tripId: string }) {
         return;
       }
       form.reset();
+      setPlace(null);
       router.refresh();
     } catch {
       setErrors({ request: "The Stop could not be added. Check your connection and try again." });
@@ -49,8 +62,9 @@ export function AddStopForm({ tripId }: { tripId: string }) {
         error={errors.name ?? errors.request}
         hint="A name is enough. Dates can follow later."
       >
-        <input name="stopName" required maxLength={100} placeholder="Monterey" />
+        <input ref={name} name="stopName" required maxLength={100} placeholder="Monterey" />
       </Field>
+      <PlaceField tripId={tripId} place={place} error={errors.place} onChange={choosePlace} />
       <button className={styles.submit} type="submit" disabled={adding}>
         {adding ? "Adding…" : "Add Stop"}
       </button>

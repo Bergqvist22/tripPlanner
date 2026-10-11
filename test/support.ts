@@ -1,5 +1,7 @@
 import { sql } from "drizzle-orm";
 import { GET as readBudget } from "@/app/api/trips/[tripId]/budget/route";
+import { GET as readMap } from "@/app/api/trips/[tripId]/map/route";
+import { GET as searchPlaces } from "@/app/api/trips/[tripId]/places/route";
 import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
 import * as itemsRoute from "@/app/api/trips/[tripId]/items/route";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
@@ -10,6 +12,7 @@ import { POST as unlockTrip } from "@/app/api/trips/[tripId]/unlock/route";
 import { GET, POST } from "@/app/api/trips/route";
 import { db } from "@/db/client";
 import { replaceRateSource, type RatesPerEuro } from "@/lib/exchange-rates";
+import { replacePlaceSearch, type Place } from "@/lib/place-search";
 
 export async function emptyDatabase() {
   await db().execute(sql`TRUNCATE trips, exchange_rates CASCADE`);
@@ -22,6 +25,19 @@ export function exchangeRateService(rates: RatesPerEuro) {
   replaceRateSource(async () => {
     if (service.down) throw new Error("The exchange-rate service is down");
     return service.rates;
+  });
+  return service;
+}
+
+// The place-search service, in memory. It finds the places it holds whose
+// label contains what is searched for, notes each search, and fails while it
+// is down.
+export function placeSearchService(places: Place[]) {
+  const service = { places, down: false, searches: [] as string[] };
+  replacePlaceSearch(async (query) => {
+    service.searches.push(query);
+    if (service.down) throw new Error("The place-search service is down");
+    return service.places.filter((place) => place.label.toLowerCase().includes(query.toLowerCase()));
   });
   return service;
 }
@@ -68,13 +84,14 @@ export function browser() {
     method: string,
     params: Params,
     body?: unknown,
+    query = "",
   ) {
     const headers = new Headers({ "content-type": "application/json" });
     if (cookies.size > 0) {
       headers.set("cookie", [...cookies].map(([name, value]) => `${name}=${value}`).join("; "));
     }
     const response = await handler(
-      new Request(`http://localhost/api/trips/${params.tripId}`, {
+      new Request(`http://localhost/api/trips/${params.tripId}${query}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
@@ -94,6 +111,10 @@ export function browser() {
     readTrip: (tripId: string) => send(tripRoute.GET, "GET", { tripId }),
     updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", { tripId }, changes),
     readBudget: (tripId: string) => send(readBudget, "GET", { tripId }),
+    readMap: (tripId: string) => send(readMap, "GET", { tripId }),
+    // Without a query nothing is searched for at all.
+    searchPlaces: (tripId: string, query?: string) =>
+      send(searchPlaces, "GET", { tripId }, undefined, query === undefined ? "" : `?${new URLSearchParams({ q: query })}`),
     deleteTrip: (tripId: string, password: unknown) => send(tripRoute.DELETE, "DELETE", { tripId }, { password }),
     addStop: (tripId: string, stop: unknown) => send(stopsRoute.POST, "POST", { tripId }, stop),
     listStops: (tripId: string) => send(stopsRoute.GET, "GET", { tripId }),

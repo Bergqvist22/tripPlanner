@@ -6,6 +6,7 @@ import { openTrip, unlockCookieName } from "@/lib/access";
 import { budgetOf, conversionFor, displayCosts } from "@/lib/budget";
 import { CURRENCIES } from "@/lib/currency";
 import { listItems } from "@/lib/items";
+import { routeOf } from "@/lib/route";
 import { listStops } from "@/lib/stops";
 import { findTripSummary } from "@/lib/trips";
 import { Section } from "@/app/section";
@@ -13,6 +14,7 @@ import { AddStopForm } from "./add-stop-form";
 import { Budget } from "./budget";
 import { DeleteTripForm } from "./delete-trip-form";
 import { ItemList } from "./item-list";
+import { RouteMap } from "./route-map";
 import { StopList } from "./stop-list";
 import { TripDetailsForm } from "./trip-details-form";
 import { UnlockForm } from "./unlock-form";
@@ -69,6 +71,9 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
       </dl>
       <div className={styles.layout}>
         <div className={styles.sections}>
+          <Section className={styles.route} heading="Map">
+            <RouteMap tripId={trip.id} route={routeOf(stops)} />
+          </Section>
           <Section className={styles.route} heading="Route">
             <StopList tripId={trip.id} stops={stops} />
             <div className={styles.card}>
