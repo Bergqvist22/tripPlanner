@@ -1,0 +1,1 @@
+ALTER TABLE "legs" ADD COLUMN "calculated_at" timestamp with time zone;

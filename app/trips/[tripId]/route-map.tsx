@@ -5,22 +5,22 @@ import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { MAP_TILES } from "@/lib/map-tiles";
-import type { Pin, Route } from "@/lib/route";
+import type { Route } from "@/lib/route";
 import styles from "./route-map.module.css";
 
 // How close the map goes in on its own: a town, not a street.
 const CLOSEST_ZOOM = 11;
 
 // The overview map of a Trip: a numbered pin per Stop that has a place, joined
-// in Route order by straight lines. It is redrawn whenever the Route it is
-// given has changed.
+// in Route order along the road where a Leg is driven and by a straight line
+// where it is not. It is redrawn whenever the Route it is given has changed.
 export function RouteMap({ tripId, route }: { tripId: string; route: Route }) {
   const router = useRouter();
   const container = useRef<HTMLDivElement>(null);
   const shown = useRef<{ map: LeafletMap; drawn: LayerGroup }>(undefined);
   // A refetched page hands over the same Route as a new object. Comparing what
-  // is in it leaves the map as the traveller moved it until a pin changes.
-  const pinsAsText = JSON.stringify(route.pins);
+  // is in it leaves the map as the traveller moved it until the Route changes.
+  const drawnAsText = JSON.stringify({ pins: route.pins, lines: route.lines });
 
   useEffect(() => {
     let left = false;
@@ -34,7 +34,7 @@ export function RouteMap({ tripId, route }: { tripId: string; route: Route }) {
         shown.current = undefined;
       }
       if (!container.current) return;
-      const pins: Pin[] = JSON.parse(pinsAsText);
+      const { pins, lines }: Pick<Route, "pins" | "lines"> = JSON.parse(drawnAsText);
 
       if (!shown.current) {
         // The wheel scrolls the page, not the map; the buttons and a pinch zoom it.
@@ -46,7 +46,10 @@ export function RouteMap({ tripId, route }: { tripId: string; route: Route }) {
       drawn.clearLayers();
 
       const points = pins.map((pin) => L.latLng(pin.latitude, pin.longitude));
-      L.polyline(points, { className: styles.line, interactive: false }).addTo(drawn);
+      for (const line of lines) {
+        const className = line.alongRoad ? styles.road : styles.straight;
+        L.polyline(line.points, { className, interactive: false }).addTo(drawn);
+      }
       pins.forEach((pin, index) => {
         const title = `${pin.number}. ${pin.name}`;
         const about = document.createElement("div");
@@ -75,7 +78,7 @@ export function RouteMap({ tripId, route }: { tripId: string; route: Route }) {
     return () => {
       left = true;
     };
-  }, [pinsAsText, tripId, router]);
+  }, [drawnAsText, tripId, router]);
 
   useEffect(
     () => () => {

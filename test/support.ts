@@ -1,5 +1,7 @@
 import { sql } from "drizzle-orm";
 import { GET as readBudget } from "@/app/api/trips/[tripId]/budget/route";
+import * as legRoute from "@/app/api/trips/[tripId]/legs/[fromStopId]/[toStopId]/route";
+import { GET as readLegs } from "@/app/api/trips/[tripId]/legs/route";
 import { GET as readMap } from "@/app/api/trips/[tripId]/map/route";
 import { GET as searchPlaces } from "@/app/api/trips/[tripId]/places/route";
 import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
@@ -13,6 +15,7 @@ import { GET, POST } from "@/app/api/trips/route";
 import { db } from "@/db/client";
 import { replaceRateSource, type RatesPerEuro } from "@/lib/exchange-rates";
 import { replacePlaceSearch, type Place } from "@/lib/place-search";
+import { replaceRouteCalculation, type Drive } from "@/lib/route-calculation";
 
 export async function emptyDatabase() {
   await db().execute(sql`TRUNCATE trips, exchange_rates CASCADE`);
@@ -38,6 +41,35 @@ export function placeSearchService(places: Place[]) {
     service.searches.push(query);
     if (service.down) throw new Error("The place-search service is down");
     return service.places.filter((place) => place.label.toLowerCase().includes(query.toLowerCase()));
+  });
+  return service;
+}
+
+type Point = { latitude: number; longitude: number };
+
+// The drive the route-calculation service below answers with: a minute and a
+// kilometre and a half per hundredth of a degree, around one corner.
+export function driveBetween(from: Point, to: Point): Drive {
+  const minutes = Math.max(1, Math.round(Math.hypot(to.latitude - from.latitude, to.longitude - from.longitude) * 100));
+  return {
+    durationSeconds: minutes * 60,
+    distanceMeters: minutes * 1500,
+    road: [
+      [from.latitude, from.longitude],
+      [from.latitude, to.longitude],
+      [to.latitude, to.longitude],
+    ],
+  };
+}
+
+// The route-calculation service, in memory. It notes each drive it is asked
+// for, finds no road while there is none, and fails while it is down.
+export function routeCalculationService() {
+  const service = { down: false, noRoad: false, asked: [] as [Point, Point][] };
+  replaceRouteCalculation(async (from, to) => {
+    service.asked.push([from, to]);
+    if (service.down) throw new Error("The route-calculation service is down");
+    return service.noRoad ? null : driveBetween(from, to);
   });
   return service;
 }
@@ -112,6 +144,9 @@ export function browser() {
     updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", { tripId }, changes),
     readBudget: (tripId: string) => send(readBudget, "GET", { tripId }),
     readMap: (tripId: string) => send(readMap, "GET", { tripId }),
+    readLegs: (tripId: string) => send(readLegs, "GET", { tripId }),
+    updateLeg: (tripId: string, fromStopId: string, toStopId: string, changes: unknown) =>
+      send(legRoute.PATCH, "PATCH", { tripId, fromStopId, toStopId }, changes),
     // Without a query nothing is searched for at all.
     searchPlaces: (tripId: string, query?: string) =>
       send(searchPlaces, "GET", { tripId }, undefined, query === undefined ? "" : `?${new URLSearchParams({ q: query })}`),

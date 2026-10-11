@@ -128,6 +128,9 @@ export const legs = pgTable(
     calculatedDurationSeconds: integer(),
     calculatedDistanceMeters: integer(),
     calculatedGeometry: jsonb(),
+    // When the drive between the two Stops was last calculated, whether or
+    // not a road was found. Emptied when either Stop is given another place.
+    calculatedAt: timestamp({ withTimezone: true }),
     manualDurationSeconds: integer(),
   },
   (t) => [primaryKey({ columns: [t.fromStopId, t.toStopId] })],

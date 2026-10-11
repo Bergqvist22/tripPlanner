@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { browser, emptyDatabase, placeSearchService, unlockedTrip } from "./support";
+import { browser, driveBetween, emptyDatabase, placeSearchService, routeCalculationService, unlockedTrip } from "./support";
 
 const sanFrancisco = { label: "San Francisco, California, United States", latitude: 37.7793, longitude: -122.4193 };
 const monterey = { label: "Monterey, California, United States", latitude: 36.6002, longitude: -121.8947 };
@@ -11,7 +11,10 @@ let service: ReturnType<typeof placeSearchService>;
 beforeEach(emptyDatabase);
 beforeEach(() => {
   service = placeSearchService([sanFrancisco, monterey, montereyPark, losAngeles]);
+  routeCalculationService();
 });
+
+const alongRoad = (from: typeof monterey, to: typeof monterey) => ({ points: driveBetween(from, to).road, alongRoad: true });
 
 type Traveller = ReturnType<typeof browser>;
 
@@ -212,6 +215,7 @@ describe("the overview map", () => {
         { stopId: second.id, name: "Monterey", number: 2, ...monterey },
         { stopId: third.id, name: "LA", number: 3, ...losAngeles },
       ],
+      lines: [alongRoad(sanFrancisco, monterey), alongRoad(monterey, losAngeles)],
       stopsWithoutPlace: 0,
     });
   });
@@ -219,7 +223,7 @@ describe("the overview map", () => {
   test("is empty for a Trip without Stops", async () => {
     const { tripId, emil } = await unlockedTrip();
 
-    expect(await routeAsRead(emil, tripId)).toEqual({ pins: [], stopsWithoutPlace: 0 });
+    expect(await routeAsRead(emil, tripId)).toEqual({ pins: [], lines: [], stopsWithoutPlace: 0 });
   });
 
   test("leaves out a Stop without a place, and joins the Stops around it", async () => {
@@ -236,6 +240,16 @@ describe("the overview map", () => {
       ["Los Angeles", 3],
     ]);
     expect(route.stopsWithoutPlace).toBe(1);
+    // No Leg runs between the two, so no road is drawn: a straight line joins them.
+    expect(route.lines).toEqual([
+      {
+        points: [
+          [sanFrancisco.latitude, sanFrancisco.longitude],
+          [losAngeles.latitude, losAngeles.longitude],
+        ],
+        alongRoad: false,
+      },
+    ]);
   });
 
   test("follows the Route as Stops are added, reordered and deleted", async () => {
@@ -256,6 +270,7 @@ describe("the overview map", () => {
         { stopId: third.id, name: "Los Angeles", number: 1, ...losAngeles },
         { stopId: second.id, name: "Monterey", number: 2, ...monterey },
       ],
+      lines: [alongRoad(losAngeles, monterey)],
       stopsWithoutPlace: 0,
     });
   });
@@ -268,7 +283,7 @@ describe("the overview map", () => {
     expect((await routeAsRead(emil, tripId)).pins).toEqual([{ stopId: stop.id, name: "Monterey", number: 1, ...monterey }]);
 
     await emil.updateStop(tripId, stop.id, { place: null });
-    expect(await routeAsRead(emil, tripId)).toEqual({ pins: [], stopsWithoutPlace: 1 });
+    expect(await routeAsRead(emil, tripId)).toEqual({ pins: [], lines: [], stopsWithoutPlace: 1 });
   });
 
   test("is shown only to a browser that has unlocked the Trip", async () => {

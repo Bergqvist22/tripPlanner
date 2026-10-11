@@ -1,10 +1,22 @@
 .list {
   display: grid;
-  gap: 10px;
+  /* The Leg between two Stops is what keeps them apart. */
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
   counter-reset: stop;
+}
+
+.row {
+  display: grid;
+  min-width: 0;
+  counter-increment: stop;
+}
+
+/* Room for one line, so the Route does not jump while a Leg is being fetched. */
+.leg {
+  min-height: 44px;
 }
 
 .stop {
@@ -17,7 +29,6 @@
   border: 1px solid var(--line);
   border-left: 4px solid var(--accent);
   border-radius: var(--radius);
-  counter-increment: stop;
 }
 
 /* While one Stop is dragged the others slide aside to show where it lands. */
@@ -26,16 +37,24 @@
   -webkit-user-select: none;
 }
 
-.dragging .stop {
+.dragging .row {
   transition: transform 150ms ease;
+}
+
+/* The Legs are about to change, so they are not carried along. */
+.dragging .leg {
+  visibility: hidden;
 }
 
 .dragging .dragged {
   position: relative;
   z-index: 1;
+  transition: none;
+}
+
+.dragging .dragged .stop {
   border-color: var(--accent);
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.18);
-  transition: none;
 }
 
 .handle {

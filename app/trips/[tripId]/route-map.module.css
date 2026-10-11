@@ -37,11 +37,17 @@
   outline-offset: 2px;
 }
 
-.line {
+.road,
+.straight {
   stroke: var(--accent);
   stroke-width: 3;
   stroke-opacity: 0.85;
   fill: none;
+}
+
+/* Not along a road: a flight, a ferry, or a drive that is not calculated. */
+.straight {
+  stroke-dasharray: 2 8;
 }
 
 /* What a pin says when it is opened. The popup itself stays light. */

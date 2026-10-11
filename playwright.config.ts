@@ -4,8 +4,10 @@ import { TEST_DATABASE_URL } from "./test/database";
 // Browser tests run against a production build on its own port, using the
 // test database, so they disturb neither `npm run dev` nor development data.
 const PORT = 3100;
-// The place-search service is stood in for by e2e/place-search-stub.ts.
+// The place-search and route-calculation services are stood in for by
+// e2e/place-search-stub.ts and e2e/route-calculation-stub.ts.
 const PLACE_SEARCH_PORT = 3101;
+const ROUTE_CALCULATION_PORT = 3102;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -20,6 +22,12 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
+      command: `tsx e2e/route-calculation-stub.ts ${ROUTE_CALCULATION_PORT}`,
+      // It answers "bad request" to this, which says it is up.
+      url: `http://127.0.0.1:${ROUTE_CALCULATION_PORT}`,
+      reuseExistingServer: false,
+    },
+    {
       command: `tsx e2e/prepare-database.ts && next build && next start --port ${PORT}`,
       url: `http://localhost:${PORT}`,
       env: {
@@ -27,6 +35,7 @@ export default defineConfig({
         // No test reaches the exchange-rate service: nothing answers at this address.
         EXCHANGE_RATES_URL: "http://127.0.0.1:9",
         PLACE_SEARCH_URL: `http://127.0.0.1:${PLACE_SEARCH_PORT}`,
+        ROUTE_CALCULATION_URL: `http://127.0.0.1:${ROUTE_CALCULATION_PORT}`,
       },
       reuseExistingServer: false,
       timeout: 180_000,

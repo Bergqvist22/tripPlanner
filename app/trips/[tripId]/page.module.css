@@ -53,6 +53,12 @@
   font-weight: 600;
 }
 
+.facts small {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
 .layout,
 .sections {
   display: grid;

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -6,6 +7,7 @@ import { openTrip, unlockCookieName } from "@/lib/access";
 import { budgetOf, conversionFor, displayCosts } from "@/lib/budget";
 import { CURRENCIES } from "@/lib/currency";
 import { listItems } from "@/lib/items";
+import { legsOf, travelOf } from "@/lib/legs";
 import { routeOf } from "@/lib/route";
 import { listStops } from "@/lib/stops";
 import { findTripSummary } from "@/lib/trips";
@@ -16,6 +18,7 @@ import { DeleteTripForm } from "./delete-trip-form";
 import { ItemList } from "./item-list";
 import { RouteMap } from "./route-map";
 import { StopList } from "./stop-list";
+import { travelTime } from "./travel";
 import { TripDetailsForm } from "./trip-details-form";
 import { UnlockForm } from "./unlock-form";
 import styles from "./page.module.css";
@@ -55,7 +58,12 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
 
   const { trip } = opened;
   const [stops, items] = await Promise.all([listStops(trip), listItems(trip)]);
-  const conversion = await conversionFor(trip, items);
+  // Exchange rates and drives are asked of their services for a traveller
+  // reading the Trip, not for a prefetch of the page: that is abandoned halfway,
+  // which would pass for the service failing.
+  await connection();
+  const [conversion, legs] = await Promise.all([conversionFor(trip, items), legsOf(stops)]);
+  const travel = travelOf(legs);
   return (
     <>
       <TripHeader name={trip.name} creatorName={trip.creatorName} />
@@ -68,14 +76,29 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
           <dt>Display currency</dt>
           <dd>{trip.displayCurrency}</dd>
         </div>
+        {travel.legs.length > 0 && (
+          <div>
+            <dt>Travel time</dt>
+            <dd>
+              {travel.legsWithoutTravelTime < travel.legs.length ? travelTime(travel.totalTravelMinutes) : "Not known yet"}
+              {travel.legsWithoutTravelTime > 0 && travel.legsWithoutTravelTime < travel.legs.length && (
+                <small>
+                  {" "}
+                  and {travel.legsWithoutTravelTime} {travel.legsWithoutTravelTime === 1 ? "Leg" : "Legs"} without a
+                  travel time
+                </small>
+              )}
+            </dd>
+          </div>
+        )}
       </dl>
       <div className={styles.layout}>
         <div className={styles.sections}>
           <Section className={styles.route} heading="Map">
-            <RouteMap tripId={trip.id} route={routeOf(stops)} />
+            <RouteMap tripId={trip.id} route={routeOf(stops, legs)} />
           </Section>
           <Section className={styles.route} heading="Route">
-            <StopList tripId={trip.id} stops={stops} />
+            <StopList tripId={trip.id} stops={stops} legs={travel.legs} />
             <div className={styles.card}>
               <AddStopForm tripId={trip.id} />
             </div>

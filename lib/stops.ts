@@ -1,6 +1,6 @@
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { items, stops } from "@/db/schema";
+import { items, legs, stops } from "@/db/schema";
 import { z } from "zod";
 import { placeSchema, type Place } from "./place-search";
 import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
@@ -149,6 +149,22 @@ export async function updateStop(
     if (departsBeforeArriving({ ...stored, ...changes })) return { errors: DEPARTURE_BEFORE_ARRIVAL };
     if (Object.keys(changes).length === 0) return { stop: stopContents(stored) };
     const { place, ...details } = changes;
+    // A drive calculated to or from where the Stop was says nothing about
+    // where it is now. What was entered by hand for its Legs stays.
+    const moved =
+      place !== undefined &&
+      (place?.latitude !== (stored.placeLatitude ?? undefined) || place?.longitude !== (stored.placeLongitude ?? undefined));
+    if (moved) {
+      await tx
+        .update(legs)
+        .set({
+          calculatedDurationSeconds: null,
+          calculatedDistanceMeters: null,
+          calculatedGeometry: null,
+          calculatedAt: null,
+        })
+        .where(or(eq(legs.fromStopId, stopId), eq(legs.toStopId, stopId)));
+    }
     const [updated] = await tx
       .update(stops)
       .set({ ...details, ...placeColumns(place), updatedAt: new Date() })

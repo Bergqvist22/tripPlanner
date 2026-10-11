@@ -12,14 +12,17 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import type { Leg } from "@/lib/legs";
 import type { Stop } from "@/lib/stops";
+import { LegBetween } from "./leg-between";
 import { stopDates, stopNights } from "./stop-dates";
 import styles from "./stop-list.module.css";
 
 // A Stop being dragged: where it started, where it would land if dropped now,
-// how far the pointer has carried it, and how far the Stops it passes move
-// aside to make room.
-type Drag = { from: number; to: number; offset: number; room: number };
+// how far the pointer has carried it, and where each Stop was when it began,
+// which is where the Stops it passes move to: the place of the one before or
+// after them.
+type Drag = { from: number; to: number; offset: number; tops: number[] };
 
 function moved<T>(list: T[], from: number, to: number) {
   const reordered = [...list];
@@ -27,7 +30,8 @@ function moved<T>(list: T[], from: number, to: number) {
   return reordered;
 }
 
-export function StopList({ tripId, stops }: { tripId: string; stops: Stop[] }) {
+// The Stops of a Trip in Route order, with the Leg to the next Stop under each.
+export function StopList({ tripId, stops, legs }: { tripId: string; stops: Stop[]; legs: Leg[] }) {
   const router = useRouter();
   // The new order is shown at once and holds until the server has confirmed it.
   const [route, showRoute] = useOptimistic(stops);
@@ -81,9 +85,11 @@ export function StopList({ tripId, stops }: { tripId: string; stops: Stop[] }) {
     if (event.button !== 0 || route.length < 2 || dragging.current) return;
     event.preventDefault();
     const { pointerId, clientY: startY } = event;
-    const boxes = route.map((stop) => rows.current.get(stop.id)!.getBoundingClientRect());
+    // The Stops themselves are measured, without the Legs under them, which
+    // stay where they are.
+    const boxes = route.map((stop) => rows.current.get(stop.id)!.firstElementChild!.getBoundingClientRect());
     const middle = (box: DOMRect) => box.top + box.height / 2;
-    const room = boxes[from].height + (boxes[1].top - boxes[0].bottom);
+    const tops = boxes.map((box) => box.top);
     let to = from;
 
     const controller = new AbortController();
@@ -107,14 +113,14 @@ export function StopList({ tripId, stops }: { tripId: string; stops: Stop[] }) {
         if (index > from && carried > middle(box)) to = Math.max(to, index);
         if (index < from && carried < middle(box)) to = Math.min(to, index);
       });
-      setDrag({ from, to, offset, room });
+      setDrag({ from, to, offset, tops });
     });
     listen("pointerup", () => {
       stop();
       if (to !== from) saveOrder(moved(route, from, to));
     });
     listen("pointercancel", stop);
-    setDrag({ from, to, offset: 0, room });
+    setDrag({ from, to, offset: 0, tops });
   }
 
   function moveWithKeyboard(event: KeyboardEvent<HTMLButtonElement>, from: number) {
@@ -129,10 +135,17 @@ export function StopList({ tripId, stops }: { tripId: string; stops: Stop[] }) {
   function shift(index: number): CSSProperties | undefined {
     if (!drag) return undefined;
     if (index === drag.from) return { transform: `translateY(${drag.offset}px)` };
-    if (index > drag.from && index <= drag.to) return { transform: `translateY(${-drag.room}px)` };
-    if (index < drag.from && index >= drag.to) return { transform: `translateY(${drag.room}px)` };
+    const { tops } = drag;
+    if (index > drag.from && index <= drag.to) return { transform: `translateY(${tops[index - 1] - tops[index]}px)` };
+    if (index < drag.from && index >= drag.to) return { transform: `translateY(${tops[index + 1] - tops[index]}px)` };
     return undefined;
   }
+
+  // The Leg from each Stop to the next. A pair of Stops the server has not
+  // been asked about yet, as right after a reorder, has none until it has.
+  const legsAfter = route.map((stop, index) =>
+    legs.find((leg) => leg.fromStopId === stop.id && leg.toStopId === route[index + 1]?.id),
+  );
 
   if (route.length === 0) {
     return <p className={styles.empty}>No Stops yet. Add the first place on the Route.</p>;
@@ -148,30 +161,45 @@ export function StopList({ tripId, stops }: { tripId: string; stops: Stop[] }) {
               if (row) rows.current.set(stop.id, row);
               else rows.current.delete(stop.id);
             }}
-            className={`${styles.stop} ${drag?.from === index ? styles.dragged : ""}`}
+            className={`${styles.row} ${drag?.from === index ? styles.dragged : ""}`}
             style={shift(index)}
           >
-            <button
-              ref={(handle) => {
-                if (handle) handles.current.set(stop.id, handle);
-                else handles.current.delete(stop.id);
-              }}
-              type="button"
-              className={styles.handle}
-              aria-label={`Move ${stop.name}`}
-              title="Drag to reorder, or use the arrow keys"
-              onPointerDown={(event) => startDrag(event, index)}
-              onKeyDown={(event) => moveWithKeyboard(event, index)}
-            >
-              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-                <path d="M3 4h10M3 8h10M3 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </button>
-            <Link className={styles.open} href={`/trips/${tripId}/stops/${stop.id}`} draggable={false}>
-              <span className={styles.name}>{stop.name}</span>
-              <span className={styles.dates}>{stopDates(stop)}</span>
-            </Link>
-            {stop.nights !== null && <span className={styles.nights}>{stopNights(stop.nights)}</span>}
+            <div className={styles.stop}>
+              <button
+                ref={(handle) => {
+                  if (handle) handles.current.set(stop.id, handle);
+                  else handles.current.delete(stop.id);
+                }}
+                type="button"
+                className={styles.handle}
+                aria-label={`Move ${stop.name}`}
+                title="Drag to reorder, or use the arrow keys"
+                onPointerDown={(event) => startDrag(event, index)}
+                onKeyDown={(event) => moveWithKeyboard(event, index)}
+              >
+                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                  <path d="M3 4h10M3 8h10M3 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </button>
+              <Link className={styles.open} href={`/trips/${tripId}/stops/${stop.id}`} draggable={false}>
+                <span className={styles.name}>{stop.name}</span>
+                <span className={styles.dates}>{stopDates(stop)}</span>
+              </Link>
+              {stop.nights !== null && <span className={styles.nights}>{stopNights(stop.nights)}</span>}
+            </div>
+            {index < route.length - 1 && (
+              <div className={styles.leg}>
+                {legsAfter[index] && (
+                  <LegBetween
+                    key={`${stop.id}>${route[index + 1].id}`}
+                    tripId={tripId}
+                    leg={legsAfter[index]}
+                    fromName={stop.name}
+                    toName={route[index + 1].name}
+                  />
+                )}
+              </div>
+            )}
           </li>
         ))}
       </ol>
