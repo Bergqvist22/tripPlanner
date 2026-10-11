@@ -13,6 +13,8 @@ export function AddStopForm({ tripId }: { tripId: string }) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [adding, setAdding] = useState(false);
   const [place, setPlace] = useState<Place | null>(null);
+  // Counts the Stops added, so the place search starts over for the next one.
+  const [added, setAdded] = useState(0);
   const name = useRef<HTMLInputElement>(null);
 
   // A Stop that has no name yet is named after the place found for it.
@@ -47,6 +49,7 @@ export function AddStopForm({ tripId }: { tripId: string }) {
       }
       form.reset();
       setPlace(null);
+      setAdded((count) => count + 1);
       router.refresh();
     } catch {
       setErrors({ request: "The Stop could not be added. Check your connection and try again." });
@@ -64,7 +67,7 @@ export function AddStopForm({ tripId }: { tripId: string }) {
       >
         <input ref={name} name="stopName" required maxLength={100} placeholder="Monterey" />
       </Field>
-      <PlaceField tripId={tripId} place={place} error={errors.place} onChange={choosePlace} />
+      <PlaceField key={added} tripId={tripId} place={place} error={errors.place} onChange={choosePlace} />
       <button className={styles.submit} type="submit" disabled={adding}>
         {adding ? "Adding…" : "Add Stop"}
       </button>

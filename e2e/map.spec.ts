@@ -75,9 +75,12 @@ test("a place search that fails does not keep a Stop from being saved", async ({
   await field(page, "Place").fill("nowhere");
   await expect(page.getByText("Place search is not available right now.")).toBeVisible();
   await addStop(page, "Somewhere");
+  // The form is ready for the next Stop, without what was searched for.
+  await expect(field(page, "Place")).toHaveValue("");
 
   // Editing one too: the rest of the Stop is saved as ever.
   await page.getByRole("link", { name: /Monterey/ }).click();
+  await expect(page.getByRole("heading", { name: "Monterey", level: 1 })).toBeVisible();
   await field(page, "Place").fill("nowhere");
   await expect(page.getByText("Place search is not available right now.").filter({ visible: true })).toBeVisible();
   await field(page, "Notes").fill("Aquarium opens at 10.");
@@ -109,7 +112,11 @@ test("the map follows what a fellow traveller does to the only Stop with a place
   const monterey = { label: "Monterey, California, United States", latitude: 36.6002, longitude: -121.8947 };
   const givePlace = (place: typeof monterey | null) =>
     page.request.patch(`/api/trips/${tripId}/stops/${stopId}`, { data: { place } });
-  const returnToTab = () => page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  // Not within a tenth of a second of the last return, which the page takes for the same one.
+  const returnToTab = async () => {
+    await page.waitForTimeout(150);
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  };
 
   await givePlace(monterey);
   await page.goto(`/trips/${tripId}`);
