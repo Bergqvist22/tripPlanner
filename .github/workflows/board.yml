@@ -6,7 +6,9 @@ name: Update project board
 #
 # Needs a repository secret PROJECT_TOKEN: a classic personal access token with
 # the `project` scope. The default GITHUB_TOKEN cannot reach a board owned by a
-# user account.
+# user account. If the repository is private the token also needs the `repo`
+# scope, or it cannot see the issues and the run fails with "Could not resolve
+# to a Repository".
 
 on:
   issues:
