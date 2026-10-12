@@ -9,12 +9,12 @@ import { listItems } from "@/lib/items";
 import { listStops } from "@/lib/stops";
 import { isAbout, warningsOf } from "@/lib/warnings";
 import { Section } from "@/app/section";
+import { ItemSections } from "../../item-sections";
 import { stopDates, stopNights } from "../../stop-dates";
 import { WarningList } from "../../warning-list";
 import styles from "../../page.module.css";
 import { DeleteStopForm } from "./delete-stop-form";
 import { StopDetailsForm } from "./stop-details-form";
-import { StopItems } from "./stop-items";
 
 type Props = PageProps<"/trips/[tripId]/stops/[stopId]">;
 
@@ -67,10 +67,9 @@ async function Stop({ params }: Pick<Props, "params">) {
               <WarningList tripId={trip.id} warnings={warnings} summary={false} />
             </Section>
           )}
-          <StopItems
+          <ItemSections
             tripId={trip.id}
-            stopId={stop.id}
-            closeUp={closeUpOf(stop, items)}
+            stop={{ id: stop.id, closeUp: closeUpOf(stop, items) }}
             items={items}
             displayCurrency={trip.displayCurrency}
             displayCosts={displayCosts(items, conversion)}

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { GET as readBudget } from "@/app/api/trips/[tripId]/budget/route";
+import { GET as readTripDays } from "@/app/api/trips/[tripId]/days/route";
 import * as legRoute from "@/app/api/trips/[tripId]/legs/[fromStopId]/[toStopId]/route";
 import { GET as readLegs } from "@/app/api/trips/[tripId]/legs/route";
 import { GET as readMap } from "@/app/api/trips/[tripId]/map/route";
@@ -8,6 +9,7 @@ import { GET as readWarnings } from "@/app/api/trips/[tripId]/warnings/route";
 import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
 import * as itemsRoute from "@/app/api/trips/[tripId]/items/route";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
+import { GET as readStopDays } from "@/app/api/trips/[tripId]/stops/[stopId]/days/route";
 import { GET as readCloseUp } from "@/app/api/trips/[tripId]/stops/[stopId]/map/route";
 import * as stopRoute from "@/app/api/trips/[tripId]/stops/[stopId]/route";
 import { PUT as reorderStops } from "@/app/api/trips/[tripId]/stops/order/route";
@@ -146,6 +148,8 @@ export function browser() {
     updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", { tripId }, changes),
     readBudget: (tripId: string) => send(readBudget, "GET", { tripId }),
     readMap: (tripId: string) => send(readMap, "GET", { tripId }),
+    readTripDays: (tripId: string) => send(readTripDays, "GET", { tripId }),
+    readStopDays: (tripId: string, stopId: string) => send(readStopDays, "GET", { tripId, stopId }),
     readCloseUp: (tripId: string, stopId: string) => send(readCloseUp, "GET", { tripId, stopId }),
     readLegs: (tripId: string) => send(readLegs, "GET", { tripId }),
     readWarnings: (tripId: string) => send(readWarnings, "GET", { tripId }),

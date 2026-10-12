@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { field, unlockedTrip } from "./support";
+import { field, itemList, unlockedTrip } from "./support";
 
 function items(page: Page, heading: string) {
   return page.getByRole("region", { name: heading, exact: true });
@@ -124,7 +124,7 @@ test.describe("on a phone", () => {
     const width = () => page.evaluate(() => document.documentElement.scrollWidth);
 
     await page.goto(`/trips/${tripId}/stops/${stops.stops[0].id}`);
-    await expect(page.getByRole("link", { name: /Monterey Bay Inn/ })).toBeVisible();
+    await expect(itemList(page).getByRole("link", { name: /Monterey Bay Inn/ })).toBeVisible();
     expect(await width()).toBeLessThanOrEqual(390);
 
     await page.goto(`/trips/${tripId}/items/${itemId}`);

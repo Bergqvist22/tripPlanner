@@ -16,7 +16,7 @@ import { Section } from "@/app/section";
 import { AddStopForm } from "./add-stop-form";
 import { Budget } from "./budget";
 import { DeleteTripForm } from "./delete-trip-form";
-import { ItemList } from "./item-list";
+import { ItemSections } from "./item-sections";
 import { RouteMap } from "./route-map";
 import { StopList } from "./stop-list";
 import { travelTime } from "./travel";
@@ -111,18 +111,12 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
               <AddStopForm tripId={trip.id} />
             </div>
           </Section>
-          <Section className={styles.route} heading="Items for the whole Trip">
-            <ItemList
-              tripId={trip.id}
-              items={items.filter((item) => item.stopId === null)}
-              displayCurrency={trip.displayCurrency}
-              displayCosts={displayCosts(items, conversion)}
-              empty="No Items yet. Flights, the rental car and anything else that is not tied to one Stop go here."
-            />
-            <Link className={styles.add} href={`/trips/${trip.id}/items/new`}>
-              Add Item
-            </Link>
-          </Section>
+          <ItemSections
+            tripId={trip.id}
+            items={items.filter((item) => item.stopId === null)}
+            displayCurrency={trip.displayCurrency}
+            displayCosts={displayCosts(items, conversion)}
+          />
         </div>
         <div className={styles.sections}>
           <Section className={styles.card} heading="Budget">

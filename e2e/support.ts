@@ -6,6 +6,12 @@ export function field(page: Page, label: string, options?: { exact?: boolean }) 
   return page.getByLabel(label, options).filter({ visible: true });
 }
 
+// The Items of the Stop or of the whole Trip as a list by Category, on the page
+// being looked at. They are listed day by day as well, by title alone.
+export function itemList(page: Page) {
+  return page.getByRole("region", { name: /^Items( for the whole Trip)?$/ }).filter({ visible: true });
+}
+
 // Resolves once a change made on the page has been saved.
 export function saved(page: Page) {
   return page.waitForResponse((response) => response.request().method() === "PATCH" && response.ok());

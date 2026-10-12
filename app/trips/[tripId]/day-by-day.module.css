@@ -1,0 +1,87 @@
+.days {
+  display: grid;
+  gap: 18px;
+}
+
+.day {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.day h3 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.listed,
+.onDay {
+  display: grid;
+  align-items: baseline;
+  column-gap: 12px;
+  min-width: 0;
+  padding: 6px 14px;
+}
+
+/* The times of a day in a column of their own, so the day reads downwards. */
+.onDay {
+  grid-template-columns: 3.2em minmax(0, 1fr);
+}
+
+.listed + .listed,
+.onDay + .onDay {
+  border-top: 1px solid var(--line);
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.title {
+  /* Tall enough for a thumb. */
+  padding: 6px 0;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.title:hover {
+  color: var(--accent);
+}
+
+.about {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.onDay .about {
+  grid-column: 2;
+}
+
+/* A Suggestion is an idea, nothing decided, and a Rejected Item is kept for
+   reference: neither is read as part of the day the way the rest is. */
+[data-status="suggestion"] .title,
+[data-status="rejected"] .title {
+  font-weight: 400;
+}
+
+[data-status="rejected"] .title {
+  color: var(--muted);
+  text-decoration: line-through;
+}

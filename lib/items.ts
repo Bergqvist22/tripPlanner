@@ -36,6 +36,12 @@ const link = z
     return z.NEVER;
   });
 
+// A time of day as a clock shows it, from 00:00 to 23:59.
+const optionalTime = z
+  .string({ error: "Enter a valid time" })
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a valid time, like 14:30")
+  .nullable();
+
 const itemDetailsSchema = z.object({
   // No Stop means the Item sits on the Trip as a whole.
   stopId: z.uuid("Choose a Stop on the Route, or the whole Trip").toLowerCase().nullable(),
@@ -53,8 +59,10 @@ const itemDetailsSchema = z.object({
     .toUpperCase()
     .refine(isCurrency, "Choose a valid currency"),
   costBasis: z.enum(costBasis.enumValues, "Choose whether the cost is total or per person"),
-  // For Accommodation these are check-in and check-out.
+  // The day the Item is listed under, and when on that day. For Accommodation
+  // the date and the end date are check-in and check-out.
   date: optionalDate("Enter a valid date"),
+  time: optionalTime,
   endDate: optionalDate("Enter a valid end date"),
   place: optionalPlace,
   link,
@@ -110,7 +118,8 @@ export function parseItemChanges(input: unknown): { changes: ItemChanges } | { e
   return result.success ? { changes: result.data } : { errors: fieldErrors(result.error) };
 }
 
-// An Item as travellers see it. Dates are calendar dates (YYYY-MM-DD).
+// An Item as travellers see it. Dates are calendar dates (YYYY-MM-DD) and the
+// time is one of day (HH:MM), in no time zone: what the clock shows there.
 export type Item = {
   id: string;
   stopId: string | null;
@@ -121,6 +130,7 @@ export type Item = {
   currency: string;
   costBasis: "total" | "per_person";
   date: string | null;
+  time: string | null;
   endDate: string | null;
   // An Item without a place is left off the close-up map of its Stop.
   place: Place | null;
@@ -134,7 +144,25 @@ function itemContents(stored: typeof items.$inferSelect): Item {
     stored;
   const cost = stored.cost === null ? null : Number(stored.cost);
   const place = placeIn(stored);
-  return { id, stopId, category, title, status, cost, currency, costBasis, date, endDate, place, link, bookingReference, notes };
+  // Stored to the second, which nobody plans by.
+  const time = stored.time === null ? null : stored.time.slice(0, 5);
+  return {
+    id,
+    stopId,
+    category,
+    title,
+    status,
+    cost,
+    currency,
+    costBasis,
+    date,
+    time,
+    endDate,
+    place,
+    link,
+    bookingReference,
+    notes,
+  };
 }
 
 // The cost is stored as an exact decimal, and the place in columns of its own.

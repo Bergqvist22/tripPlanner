@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { field, unlockedTrip } from "./support";
+import { field, itemList, unlockedTrip } from "./support";
 
 // A Trip with one Stop and one Item on it, as a fellow traveller would reach
 // them: through the server, without this page knowing.
@@ -71,7 +71,7 @@ test("a Trip is refetched when the traveller returns to the tab", async ({ page 
   await page.request.patch(itemAddress, { data: { title: "Monterey Bay Aquarium" } });
   await returnToTab(page);
   await expect(field(page, "Notes")).toHaveValue("Aquarium opens at 10.");
-  await expect(page.getByRole("link", { name: "Monterey Bay Aquarium" })).toBeVisible();
+  await expect(itemList(page).getByRole("link", { name: "Monterey Bay Aquarium" })).toBeVisible();
 
   // On an Item's page, a field being edited keeps what was typed in it.
   await page.goto(`/trips/${tripId}/items/${itemId}`);

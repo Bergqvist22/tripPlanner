@@ -19,9 +19,14 @@ function itemCost({ cost, currency, costBasis }: Item, displayCost: string | und
   return `${price} ${costBasis === "total" ? "total" : "per person"}`;
 }
 
-function itemDates({ category, date, endDate }: Item) {
-  if (category !== "accommodation" || !date || !endDate) return undefined;
-  return `Check-in ${formattedDate(date)} · Check-out ${formattedDate(endDate)}`;
+// The day the Item is on, and when on it, as far as they are known.
+function itemDates({ category, date, time, endDate }: Item) {
+  const at = time ? ` at ${time}` : "";
+  if (category === "accommodation" && date && endDate) {
+    return `Check-in ${formattedDate(date)}${at} · Check-out ${formattedDate(endDate)}`;
+  }
+  if (date) return `${formattedDate(date)}${at}`;
+  return time ? `At ${time}` : undefined;
 }
 
 // The site a link leads to, which says more than the whole address.

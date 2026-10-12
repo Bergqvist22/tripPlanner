@@ -11,6 +11,7 @@ export type ItemField =
   | "stopId"
   | "title"
   | "date"
+  | "time"
   | "endDate"
   | "cost"
   | "currency"
@@ -31,6 +32,7 @@ export function itemShown(item: Partial<Item>): ItemFieldValues {
     stopId: item.stopId ?? "",
     title: item.title ?? "",
     date: item.date ?? "",
+    time: item.time ?? "",
     endDate: item.endDate ?? "",
     cost: item.cost == null ? "" : String(item.cost),
     currency: item.currency ?? "",
@@ -56,8 +58,9 @@ export function itemEntered(typed: ItemFieldValues): Record<ItemField, unknown> 
     ...typed,
     category: typed.category || null,
     stopId: typed.stopId || null,
-    // An emptied date means it is not decided yet.
+    // An emptied date or time means it is not decided yet.
     date: typed.date || null,
+    time: typed.time || null,
     endDate: typed.endDate || null,
     cost: costEntered(typed.cost),
     place: placeEntered(typed.place),
@@ -85,6 +88,13 @@ export function ItemFields({
   currencies: readonly string[];
   adding?: boolean;
 }) {
+  // Only an Accommodation shows a check-out date. One left behind by an Item
+  // that is no longer an Accommodation would be held against its date unseen.
+  function changeCategory(category: string) {
+    change("category", category);
+    if (category !== "accommodation" && typed.endDate) change("endDate", "");
+  }
+
   // An input, select or textarea of this name, holding what was typed.
   const held = (field: ItemField) => ({
     name: field,
@@ -96,7 +106,7 @@ export function ItemFields({
     <>
       <div className={styles.row}>
         <Field label="Category" error={errors.category}>
-          <select {...held("category")} required>
+          <select {...held("category")} onChange={(event) => changeCategory(event.target.value)} required>
             {adding && <option value="">Choose…</option>}
             {CATEGORIES.map((value) => (
               <option key={value} value={value}>
@@ -119,13 +129,27 @@ export function ItemFields({
       <Field label="Title" error={errors.title}>
         <input {...held("title")} required maxLength={100} />
       </Field>
-      {typed.category === "accommodation" && (
-        <div className={styles.row}>
-          <Field label="Check-in" error={errors.date}>
-            <input {...held("date")} type="date" required />
+      {typed.category === "accommodation" ? (
+        <>
+          <div className={styles.row}>
+            <Field label="Check-in" error={errors.date}>
+              <input {...held("date")} type="date" required />
+            </Field>
+            <Field label="Check-out" error={errors.endDate}>
+              <input {...held("endDate")} type="date" required />
+            </Field>
+          </div>
+          <Field label="Time" error={errors.time} hint="When you can check in, if you know. It can be left out.">
+            <input {...held("time")} type="time" />
           </Field>
-          <Field label="Check-out" error={errors.endDate}>
-            <input {...held("endDate")} type="date" required />
+        </>
+      ) : (
+        <div className={styles.row}>
+          <Field label="Date" error={errors.date ?? errors.endDate} hint="Lists the Item under that day. Without one it is Unscheduled.">
+            <input {...held("date")} type="date" />
+          </Field>
+          <Field label="Time" error={errors.time}>
+            <input {...held("time")} type="time" />
           </Field>
         </div>
       )}

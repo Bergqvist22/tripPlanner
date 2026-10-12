@@ -33,15 +33,15 @@ export function NewItemForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const { date, endDate, ...entered } = itemEntered(typed);
+    const { endDate, ...entered } = itemEntered(typed);
     setAdding(true);
     setErrors({});
     try {
       const response = await fetch(`/api/trips/${tripId}/items`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        // Only an Accommodation shows its dates, so only it has any.
-        body: JSON.stringify(typed.category === "accommodation" ? { ...entered, date, endDate } : entered),
+        // Only an Accommodation shows a check-out date, so only it has one.
+        body: JSON.stringify(typed.category === "accommodation" ? { ...entered, endDate } : entered),
       });
       if (response.status === 400) {
         setErrors((await response.json()).errors);

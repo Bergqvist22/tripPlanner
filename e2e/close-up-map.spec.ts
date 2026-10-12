@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { field, saved, unlockedTrip } from "./support";
+import { field, itemList, saved, unlockedTrip } from "./support";
 
 // The map's background is not what is tested, and its service is left alone.
 test.beforeEach(({ page }) => page.route(/tile\.openstreetmap\.org/, (route) => route.abort()));
@@ -39,7 +39,7 @@ async function choosePlace(page: Page, search: string, label: string) {
 }
 
 function card(page: Page, title: string) {
-  return page.getByRole("listitem").filter({ hasText: title });
+  return itemList(page).getByRole("listitem").filter({ hasText: title });
 }
 
 test("a traveller gives Items a place and sees them on the close-up map of their Stop", async ({ page }) => {
@@ -66,7 +66,7 @@ test("a traveller gives Items a place and sees them on the close-up map of their
   await expect(card(page, "Chowder")).toBeVisible();
   await expect(pins(page)).toHaveCount(1);
 
-  await page.getByRole("link", { name: "Chowder" }).click();
+  await itemList(page).getByRole("link", { name: "Chowder" }).click();
   await expect(page.getByRole("heading", { name: "Chowder", level: 1 })).toBeVisible();
   await choosePlace(page, "wharf", wharf);
   await expect(page.getByText("Saved.", { exact: true }).filter({ visible: true })).toBeVisible();

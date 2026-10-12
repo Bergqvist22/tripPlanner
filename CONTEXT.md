@@ -66,7 +66,7 @@ Something about where the group sleeps that it will want to look at: a night of 
 _Avoid_: Alert, error, conflict
 
 **Unscheduled**:
-An Item with no date. Items with a date are listed under that day of their Stop; a time of day is optional on top.
+An Item with no date. Items with a date are listed under that day of their Stop, or of the Trip when they are for the whole Trip, in time order with those without a time first; a time of day is optional on top, and alone it does not schedule an Item. An Accommodation is listed on its check-in day.
 _Avoid_: Undated, backlog
 
 **Recently deleted**:

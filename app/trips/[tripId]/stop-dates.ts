@@ -11,6 +11,19 @@ export function formattedDate(date: string) {
   return dayMonthYear.format(new Date(date));
 }
 
+const weekdayDayMonthYear = new Intl.DateTimeFormat("en-GB", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+// A date as the heading of its day: "Fri, 2 Jul 2027".
+export function formattedDay(date: string) {
+  return weekdayDayMonthYear.format(new Date(date));
+}
+
 export function stopDates({ arrivalDate, departureDate }: Pick<Stop, "arrivalDate" | "departureDate">) {
   if (arrivalDate && departureDate) return `${formattedDate(arrivalDate)} – ${formattedDate(departureDate)}`;
   if (arrivalDate) return `Arrives ${formattedDate(arrivalDate)}`;

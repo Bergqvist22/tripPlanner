@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { TEST_DATABASE_URL } from "../test/database";
-import { field, saved, unlockedTrip } from "./support";
+import { field, itemList, saved, unlockedTrip } from "./support";
 
 function budget(page: Page) {
   return page.getByRole("region", { name: "Budget", exact: true });
@@ -120,7 +120,7 @@ test("an Item priced in another currency shows both prices and counts converted"
 
   await page.goto(`/trips/${tripId}`);
 
-  const items = page.getByRole("listitem");
+  const items = itemList(page).getByRole("listitem");
   await expect(items.filter({ hasText: "Stockholm to San Francisco" })).toContainText(
     "USD 500.00 ≈ SEK 4,000.00 per person",
   );
