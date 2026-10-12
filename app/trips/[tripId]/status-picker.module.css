@@ -1,8 +1,7 @@
 .picker {
-  /* The four choices share one row, also in a narrow card. */
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, auto));
-  justify-content: start;
+  /* Each choice is as wide as its name; a narrow card gets a second row. */
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   max-width: 100%;
   margin-top: 4px;
@@ -11,8 +10,9 @@
 .choice {
   /* Tall enough for a thumb. */
   min-height: 44px;
-  padding: 6px 9px;
+  padding: 6px 12px;
   font-size: 0.78rem;
+  white-space: nowrap;
   font-weight: 600;
   color: var(--muted);
   background: none;
