@@ -2,7 +2,7 @@ import { and, asc, eq, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { items, legs, stops } from "@/db/schema";
 import { z } from "zod";
-import { placeSchema, type Place } from "./place-search";
+import { optionalPlace, type Place } from "./place-search";
 import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
 
 const stopDetailsSchema = z.object({
@@ -10,8 +10,7 @@ const stopDetailsSchema = z.object({
   arrivalDate: optionalDate("Enter a valid arrival date"),
   departureDate: optionalDate("Enter a valid departure date"),
   notes: z.string({ error: "Notes must be text" }).max(10_000, "Notes can be at most 10,000 characters"),
-  // Where the Stop is on the map, as the place search found it. Null takes it away.
-  place: z.union([z.null(), placeSchema], { error: "Choose a place from the ones the search found" }),
+  place: optionalPlace,
 });
 
 type StopDates = { arrivalDate: string | null; departureDate: string | null };
@@ -65,13 +64,18 @@ export type Stop = {
 
 function stopContents(stored: typeof stops.$inferSelect): Stop {
   const { id, name, arrivalDate, departureDate, notes } = stored;
-  const { placeLabel: label, placeLatitude: latitude, placeLongitude: longitude } = stored;
-  const place = label !== null && latitude !== null && longitude !== null ? { label, latitude, longitude } : null;
-  return { id, name, arrivalDate, departureDate, nights: nights({ arrivalDate, departureDate }), notes, place };
+  return { id, name, arrivalDate, departureDate, nights: nights({ arrivalDate, departureDate }), notes, place: placeIn(stored) };
+}
+
+type PlaceColumns = { placeLabel: string | null; placeLatitude: number | null; placeLongitude: number | null };
+
+// The place the columns of a Stop or an Item hold, if any.
+export function placeIn({ placeLabel: label, placeLatitude: latitude, placeLongitude: longitude }: PlaceColumns) {
+  return label !== null && latitude !== null && longitude !== null ? { label, latitude, longitude } : null;
 }
 
 // A place as the columns that hold it. Nothing when the place is not sent.
-function placeColumns(place: Place | null | undefined) {
+export function placeColumns(place: Place | null | undefined) {
   if (place === undefined) return {};
   return {
     placeLabel: place?.label ?? null,

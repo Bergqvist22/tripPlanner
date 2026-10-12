@@ -67,7 +67,7 @@ export function NewItemForm({
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <ItemFields typed={typed} errors={errors} change={change} stops={stops} currencies={currencies} adding />
+      <ItemFields tripId={tripId} typed={typed} errors={errors} change={change} stops={stops} currencies={currencies} adding />
       {errors.request && (
         <p className={styles.error} role="alert">
           {errors.request}

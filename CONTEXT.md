@@ -15,7 +15,7 @@ A place on the Trip's route with an arrival and departure date. A Stop may have 
 _Avoid_: Destination, city, location, waypoint
 
 **Place**:
-The point on the map a Stop is at, with the label the place search gave it. A Stop without one works everywhere except the map.
+The point on the map a Stop or an Item is at, with the label the place search gave it. It is optional on both: a Stop or an Item without one works everywhere except the map.
 _Avoid_: Location, address, coordinates
 
 **Leg**:
@@ -23,7 +23,10 @@ The stretch between two consecutive Stops, with a travel mode and a travel time.
 _Avoid_: Route, segment, transfer
 
 **Route**:
-The whole path through all of a Trip's Stops in order, as drawn on the map.
+The whole path through all of a Trip's Stops in order, as drawn on the overview map.
+
+**Close-up map**:
+The map on a Stop's page, with a pin for each of that Stop's Items that has a place. Pins are coloured by Category; Suggestions are dimmed and Rejected Items left out unless they are being shown. The overview map shows only Stops and the Route.
 
 ### Items
 
@@ -36,7 +39,7 @@ The label on an Item: Flight, Car rental, Accommodation, Activity, Food, Transpo
 _Avoid_: Type, kind
 
 **Accommodation**:
-The one Category with extra requirements: a place plus check-in and check-out dates.
+The one Category with extra requirements: check-in and check-out dates.
 _Avoid_: Hotel, lodging, stay
 
 **Status**:

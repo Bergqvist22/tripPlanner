@@ -67,7 +67,7 @@ export function AddStopForm({ tripId }: { tripId: string }) {
       >
         <input ref={name} name="stopName" required maxLength={100} placeholder="Monterey" />
       </Field>
-      <PlaceField key={added} tripId={tripId} place={place} error={errors.place} onChange={choosePlace} />
+      <PlaceField key={added} tripId={tripId} of="Stop" place={place} error={errors.place} onChange={choosePlace} />
       <button className={styles.submit} type="submit" disabled={adding}>
         {adding ? "Adding…" : "Add Stop"}
       </button>

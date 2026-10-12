@@ -1,0 +1,75 @@
+/* A colour per Category, each dark enough to stand out from the map and from
+   the white edge around it. The map is light whatever the page is. */
+.flight {
+  --pin: #1f5fae;
+}
+
+.car_rental {
+  --pin: #6a4aa5;
+}
+
+.accommodation {
+  --pin: #c2502c;
+}
+
+.activity {
+  --pin: #237a4b;
+}
+
+.food {
+  --pin: #a8690a;
+}
+
+.transport {
+  --pin: #0d7680;
+}
+
+.other {
+  --pin: #55626a;
+}
+
+.pin {
+  background: var(--pin);
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.4);
+}
+
+/* Kept for reference, not decided on: an outline rather than a dot. */
+.rejected {
+  background: #ffffff;
+  border-color: var(--pin);
+}
+
+.pin:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  background: var(--pin);
+  border-radius: 50%;
+}
+
+.dimmed {
+  font-style: italic;
+}

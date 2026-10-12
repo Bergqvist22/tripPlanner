@@ -3,20 +3,8 @@
 import { SaveStatus, useAutosave } from "@/app/autosave";
 import { Field } from "@/app/field";
 import styles from "@/app/form.module.css";
-import type { Place } from "@/lib/place-search";
 import type { Stop } from "@/lib/stops";
-import { PlaceField } from "../../place-field";
-
-// A place as a field holds it: as text, the same for the same place.
-function placeShown(place: Place | null) {
-  if (!place) return "";
-  const { label, latitude, longitude } = place;
-  return JSON.stringify({ label, latitude, longitude });
-}
-
-function placeEntered(shown: string): Place | null {
-  return shown ? JSON.parse(shown) : null;
-}
+import { PlaceField, placeEntered, placeShown } from "../../place-field";
 
 function stopShown({ name, arrivalDate, departureDate, notes, place }: Stop) {
   return { name, arrivalDate: arrivalDate ?? "", departureDate: departureDate ?? "", notes, place: placeShown(place) };
@@ -57,6 +45,7 @@ export function StopDetailsForm({ tripId, stop }: { tripId: string; stop: Stop }
       </div>
       <PlaceField
         tripId={tripId}
+        of="Stop"
         place={placeEntered(typed.place)}
         error={errors.place}
         onChange={(place) => {

@@ -3,17 +3,18 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
+import { closeUpOf } from "@/lib/close-up";
 import { conversionFor, displayCosts } from "@/lib/budget";
 import { listItems } from "@/lib/items";
 import { listStops } from "@/lib/stops";
 import { isAbout, warningsOf } from "@/lib/warnings";
 import { Section } from "@/app/section";
-import { ItemList } from "../../item-list";
 import { stopDates, stopNights } from "../../stop-dates";
 import { WarningList } from "../../warning-list";
 import styles from "../../page.module.css";
 import { DeleteStopForm } from "./delete-stop-form";
 import { StopDetailsForm } from "./stop-details-form";
+import { StopItems } from "./stop-items";
 
 type Props = PageProps<"/trips/[tripId]/stops/[stopId]">;
 
@@ -66,18 +67,14 @@ async function Stop({ params }: Pick<Props, "params">) {
               <WarningList tripId={trip.id} warnings={warnings} summary={false} />
             </Section>
           )}
-          <Section className={styles.route} heading="Items">
-            <ItemList
-              tripId={trip.id}
-              items={items}
-              displayCurrency={trip.displayCurrency}
-              displayCosts={displayCosts(items, conversion)}
-              empty="No Items yet. Add where you might stay and what you might do here."
-            />
-            <Link className={styles.add} href={`/trips/${trip.id}/items/new?stop=${stop.id}`}>
-              Add Item
-            </Link>
-          </Section>
+          <StopItems
+            tripId={trip.id}
+            stopId={stop.id}
+            closeUp={closeUpOf(stop, items)}
+            items={items}
+            displayCurrency={trip.displayCurrency}
+            displayCosts={displayCosts(items, conversion)}
+          />
           <Section className={`${styles.card} ${styles.wide}`} heading="Stop details">
             <StopDetailsForm tripId={trip.id} stop={stop} />
           </Section>

@@ -4,8 +4,9 @@ import { category, costBasis, items, status } from "@/db/schema";
 import { z } from "zod";
 import type { Category } from "./categories";
 import { isCurrency } from "./currency";
+import { optionalPlace, type Place } from "./place-search";
 import type { Status } from "./statuses";
-import { stopStaysOnRoute } from "./stops";
+import { placeColumns, placeIn, stopStaysOnRoute } from "./stops";
 import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
 
 // The cost column holds 10 digits before the decimal point and 2 after.
@@ -55,6 +56,7 @@ const itemDetailsSchema = z.object({
   // For Accommodation these are check-in and check-out.
   date: optionalDate("Enter a valid date"),
   endDate: optionalDate("Enter a valid end date"),
+  place: optionalPlace,
   link,
   bookingReference: z
     .string({ error: "The booking reference must be text" })
@@ -79,7 +81,6 @@ export type ItemChanges = z.infer<typeof itemChangesSchema>;
 type Dated = { category: Category; date?: string | null; endDate?: string | null };
 
 // Accommodation is the one Category that needs dates: the nights it covers.
-// (Its place comes with place search.)
 function dateErrors({ category, date, endDate }: Dated): FieldErrors | undefined {
   const errors: FieldErrors = {};
   if (category === "accommodation") {
@@ -121,6 +122,8 @@ export type Item = {
   costBasis: "total" | "per_person";
   date: string | null;
   endDate: string | null;
+  // An Item without a place is left off the close-up map of its Stop.
+  place: Place | null;
   link: string;
   bookingReference: string;
   notes: string;
@@ -130,12 +133,17 @@ function itemContents(stored: typeof items.$inferSelect): Item {
   const { id, stopId, category, title, status, currency, costBasis, date, endDate, link, bookingReference, notes } =
     stored;
   const cost = stored.cost === null ? null : Number(stored.cost);
-  return { id, stopId, category, title, status, cost, currency, costBasis, date, endDate, link, bookingReference, notes };
+  const place = placeIn(stored);
+  return { id, stopId, category, title, status, cost, currency, costBasis, date, endDate, place, link, bookingReference, notes };
 }
 
-// The cost is stored as an exact decimal.
-function storedCost<Fields extends { cost?: number | null }>({ cost, ...fields }: Fields) {
-  return { ...fields, ...(cost === undefined ? {} : { cost: cost === null ? null : cost.toFixed(2) }) };
+// The cost is stored as an exact decimal, and the place in columns of its own.
+function asStored<Fields extends { cost?: number | null; place?: Place | null }>({ cost, place, ...fields }: Fields) {
+  return {
+    ...fields,
+    ...placeColumns(place),
+    ...(cost === undefined ? {} : { cost: cost === null ? null : cost.toFixed(2) }),
+  };
 }
 
 const itemIdSchema = z.uuid();
@@ -157,7 +165,7 @@ export async function addItem(trip: Trip, item: NewItem): Promise<{ item: Item }
     if (item.stopId && !(await stopStaysOnRoute(tx, trip, item.stopId))) return { errors: NOT_ON_ROUTE };
     const [added] = await tx
       .insert(items)
-      .values({ currency: trip.displayCurrency, ...storedCost(item), tripId: trip.id })
+      .values({ currency: trip.displayCurrency, ...asStored(item), tripId: trip.id })
       .returning();
     return { item: itemContents(added) };
   });
@@ -193,7 +201,7 @@ export async function updateItem(
     if (Object.keys(changes).length === 0) return { item: itemContents(stored) };
     const [updated] = await tx
       .update(items)
-      .set({ ...storedCost(changes), updatedAt: new Date() })
+      .set({ ...asStored(changes), updatedAt: new Date() })
       .where(eq(items.id, itemId))
       .returning();
     return { item: itemContents(updated) };

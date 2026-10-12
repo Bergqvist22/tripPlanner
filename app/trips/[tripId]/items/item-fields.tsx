@@ -4,6 +4,7 @@ import { CATEGORIES, CATEGORY_NAMES } from "@/lib/categories";
 import type { Item } from "@/lib/items";
 import type { Stop } from "@/lib/stops";
 import type { FieldErrors } from "@/lib/trips";
+import { PlaceField, placeEntered, placeShown } from "../place-field";
 
 export type ItemField =
   | "category"
@@ -14,6 +15,7 @@ export type ItemField =
   | "cost"
   | "currency"
   | "costBasis"
+  | "place"
   | "link"
   | "bookingReference"
   | "notes";
@@ -33,6 +35,7 @@ export function itemShown(item: Partial<Item>): ItemFieldValues {
     cost: item.cost == null ? "" : String(item.cost),
     currency: item.currency ?? "",
     costBasis: item.costBasis ?? "total",
+    place: placeShown(item.place ?? null),
     link: item.link ?? "",
     bookingReference: item.bookingReference ?? "",
     notes: item.notes ?? "",
@@ -57,21 +60,27 @@ export function itemEntered(typed: ItemFieldValues): Record<ItemField, unknown> 
     date: typed.date || null,
     endDate: typed.endDate || null,
     cost: costEntered(typed.cost),
+    place: placeEntered(typed.place),
   };
 }
 
 // The fields of an Item, for adding one and for editing one.
 export function ItemFields({
+  tripId,
   typed,
   errors,
   change,
+  onPlaceChosen,
   stops,
   currencies,
   adding = false,
 }: {
+  tripId: string;
   typed: ItemFieldValues;
   errors: FieldErrors;
   change: (field: ItemField, value: string) => void;
+  // Told once a place has been chosen or taken away, which is not typing.
+  onPlaceChosen?: () => void;
   stops: Pick<Stop, "id" | "name">[];
   currencies: readonly string[];
   adding?: boolean;
@@ -142,6 +151,16 @@ export function ItemFields({
           <option value="per_person">Per person</option>
         </select>
       </Field>
+      <PlaceField
+        tripId={tripId}
+        of="Item"
+        place={placeEntered(typed.place)}
+        error={errors.place}
+        onChange={(place) => {
+          change("place", placeShown(place));
+          onPlaceChosen?.();
+        }}
+      />
       <Field label="Link" error={errors.link}>
         <input
           {...held("link")}

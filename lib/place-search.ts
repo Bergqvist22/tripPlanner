@@ -9,6 +9,10 @@ export const placeSchema = z.object({
 
 export type Place = z.infer<typeof placeSchema>;
 
+// Where a Stop or an Item is on the map, as the place search found it. Null
+// takes it away.
+export const optionalPlace = z.union([z.null(), placeSchema], { error: "Choose a place from the ones the search found" });
+
 // The adapter in front of the place-search service. It rejects when the
 // service cannot be reached or does not answer with places.
 export type PlaceSearch = (query: string) => Promise<Place[]>;

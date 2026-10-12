@@ -37,7 +37,17 @@ function decidedFirst(a: Item, b: Item) {
   return DECIDED_FIRST.indexOf(a.status) - DECIDED_FIRST.indexOf(b.status);
 }
 
-// Items grouped by Category. Rejected Items are left out until asked for.
+// Whether Rejected Items are being shown, and the way to change that. With
+// none left to show, the next Item to be Rejected is hidden again.
+export function useShowingRejected(items: Item[]) {
+  const [showing, setShowing] = useState(false);
+  const none = items.every((item) => item.status !== "rejected");
+  if (showing && none) setShowing(false);
+  return [showing && !none, setShowing] as const;
+}
+
+// Items grouped by Category. Rejected Items are left out until asked for;
+// `rejected` is for a page that shows the same Items somewhere else as well.
 // `displayCosts` holds what the Items priced in another currency cost in the
 // display currency, by Item id. `empty` is what to say when there are no Items
 // at all.
@@ -47,20 +57,21 @@ export function ItemList({
   displayCurrency,
   displayCosts,
   empty,
+  rejected,
 }: {
   tripId: string;
   items: Item[];
   displayCurrency: string;
   displayCosts: Record<string, number>;
   empty: string;
+  rejected?: ReturnType<typeof useShowingRejected>;
 }) {
   const id = useId();
-  const [showingRejected, setShowingRejected] = useState(false);
+  const own = useShowingRejected(items);
+  const [showingRejected, setShowingRejected] = rejected ?? own;
   if (items.length === 0) return <p className={styles.empty}>{empty}</p>;
 
   const rejectedCount = items.filter((item) => item.status === "rejected").length;
-  // With none left to show, the next Item to be Rejected is hidden again.
-  if (showingRejected && rejectedCount === 0) setShowingRejected(false);
   const shown = showingRejected ? items : items.filter((item) => item.status !== "rejected");
 
   return (

@@ -8,6 +8,7 @@ import { GET as readWarnings } from "@/app/api/trips/[tripId]/warnings/route";
 import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
 import * as itemsRoute from "@/app/api/trips/[tripId]/items/route";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
+import { GET as readCloseUp } from "@/app/api/trips/[tripId]/stops/[stopId]/map/route";
 import * as stopRoute from "@/app/api/trips/[tripId]/stops/[stopId]/route";
 import { PUT as reorderStops } from "@/app/api/trips/[tripId]/stops/order/route";
 import * as stopsRoute from "@/app/api/trips/[tripId]/stops/route";
@@ -145,6 +146,7 @@ export function browser() {
     updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", { tripId }, changes),
     readBudget: (tripId: string) => send(readBudget, "GET", { tripId }),
     readMap: (tripId: string) => send(readMap, "GET", { tripId }),
+    readCloseUp: (tripId: string, stopId: string) => send(readCloseUp, "GET", { tripId, stopId }),
     readLegs: (tripId: string) => send(readLegs, "GET", { tripId }),
     readWarnings: (tripId: string) => send(readWarnings, "GET", { tripId }),
     updateLeg: (tripId: string, fromStopId: string, toStopId: string, changes: unknown) =>

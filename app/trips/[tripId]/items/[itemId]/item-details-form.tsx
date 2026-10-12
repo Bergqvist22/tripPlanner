@@ -18,7 +18,7 @@ export function ItemDetailsForm({
   currencies: readonly string[];
   item: Item;
 }) {
-  const { typed, errors, change, form, status } = useAutosave({
+  const { typed, errors, change, save, form, status } = useAutosave({
     url: `/api/trips/${tripId}/items/${item.id}`,
     name: "item",
     stored: item,
@@ -28,7 +28,15 @@ export function ItemDetailsForm({
 
   return (
     <form className={styles.form} {...form}>
-      <ItemFields typed={typed} errors={errors} change={change} stops={stops} currencies={currencies} />
+      <ItemFields
+        tripId={tripId}
+        typed={typed}
+        errors={errors}
+        change={change}
+        onPlaceChosen={save}
+        stops={stops}
+        currencies={currencies}
+      />
       <SaveStatus {...status} />
     </form>
   );

@@ -13,15 +13,29 @@ type Search =
   // What was found, and for which words.
   | { state: "found"; query: string; places: Place[] };
 
-// Where a Stop is on the map: the place chosen for it, or a search for one.
-// A place is never needed, so a search that fails holds nothing back.
+// A place as a field holds it: as text, the same for the same place.
+export function placeShown(place: Place | null) {
+  if (!place) return "";
+  const { label, latitude, longitude } = place;
+  return JSON.stringify({ label, latitude, longitude });
+}
+
+export function placeEntered(shown: string): Place | null {
+  return shown ? JSON.parse(shown) : null;
+}
+
+// Where a Stop or an Item is on the map: the place chosen for it, or a search
+// for one. A place is never needed, so a search that fails holds nothing back.
 export function PlaceField({
   tripId,
+  of,
   place,
   error,
   onChange,
 }: {
   tripId: string;
+  // What the place is of, as the hints call it.
+  of: "Stop" | "Item";
   place: Place | null;
   error?: string;
   // Told the place that was chosen, or null when it is taken away.
@@ -116,11 +130,11 @@ export function PlaceField({
         </ul>
       )}
       <p className={formStyles.hint} role="status">
-        {search.state === "idle" && !place && !error && "Puts the Stop on the map. It can be left out."}
+        {search.state === "idle" && !place && !error && `Puts the ${of} on the ${of === "Stop" ? "map" : "close-up map of its Stop"}. It can be left out.`}
         {search.state === "searching" && "Searching…"}
         {search.state === "found" && search.places.length === 0 && `No place found for “${search.query}”.`}
         {search.state === "failed" &&
-          "Place search is not available right now. The Stop works without a place, so you can add one later."}
+          `Place search is not available right now. The ${of} works without a place, so you can add one later.`}
       </p>
       {error && (
         <p className={formStyles.error} role="alert">
