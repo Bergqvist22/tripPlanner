@@ -139,7 +139,7 @@ export type Item = {
   notes: string;
 };
 
-function itemContents(stored: typeof items.$inferSelect): Item {
+export function itemContents(stored: typeof items.$inferSelect): Item {
   const { id, stopId, category, title, status, currency, costBasis, date, endDate, link, bookingReference, notes } =
     stored;
   const cost = stored.cost === null ? null : Number(stored.cost);

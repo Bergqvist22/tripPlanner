@@ -8,6 +8,7 @@ import { budgetOf, conversionFor, displayCosts } from "@/lib/budget";
 import { CURRENCIES } from "@/lib/currency";
 import { listItems } from "@/lib/items";
 import { legsOf, travelOf } from "@/lib/legs";
+import { listRecentlyDeleted } from "@/lib/recently-deleted";
 import { routeOf } from "@/lib/route";
 import { listStops } from "@/lib/stops";
 import { findTripSummary } from "@/lib/trips";
@@ -17,6 +18,7 @@ import { AddStopForm } from "./add-stop-form";
 import { Budget } from "./budget";
 import { DeleteTripForm } from "./delete-trip-form";
 import { ItemSections } from "./item-sections";
+import { RecentlyDeleted } from "./recently-deleted";
 import { RouteMap } from "./route-map";
 import { StopList } from "./stop-list";
 import { travelTime } from "./travel";
@@ -59,7 +61,7 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
   }
 
   const { trip } = opened;
-  const [stops, items] = await Promise.all([listStops(trip), listItems(trip)]);
+  const [stops, items, deleted] = await Promise.all([listStops(trip), listItems(trip), listRecentlyDeleted(trip)]);
   // Exchange rates and drives are asked of their services for a traveller
   // reading the Trip, not for a prefetch of the page: that is abandoned halfway,
   // which would pass for the service failing.
@@ -125,6 +127,12 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
           <Section className={styles.card} heading="Trip details">
             <TripDetailsForm trip={trip} currencies={CURRENCIES} />
           </Section>
+          {deleted.stops.length + deleted.items.length > 0 && (
+            <Section className={styles.card} heading="Recently deleted">
+              <p className={styles.lead}>Deleted Stops and Items can be restored for 30 days.</p>
+              <RecentlyDeleted tripId={trip.id} deleted={deleted} />
+            </Section>
+          )}
           <Section className={styles.card} heading="Delete this Trip">
             <p className={styles.lead}>
               This removes the Trip and everything in it for good. Enter the Trip password to confirm.

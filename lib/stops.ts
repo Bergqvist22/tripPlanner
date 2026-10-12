@@ -62,7 +62,7 @@ export type Stop = {
   place: Place | null;
 };
 
-function stopContents(stored: typeof stops.$inferSelect): Stop {
+export function stopContents(stored: typeof stops.$inferSelect): Stop {
   const { id, name, arrivalDate, departureDate, notes } = stored;
   return { id, name, arrivalDate, departureDate, nights: nights({ arrivalDate, departureDate }), notes, place: placeIn(stored) };
 }
@@ -208,7 +208,8 @@ export async function reorderStops(trip: Trip, stopIds: string[]): Promise<Stop[
 
 // The Stop is marked as deleted rather than removed, so it can be restored
 // from Recently deleted. Its Items are marked with the same timestamp, which
-// is how restoring the Stop will know them. False when the Trip has no such Stop.
+// is how restoring the Stop knows them (lib/recently-deleted.ts). False when
+// the Trip has no such Stop.
 export async function deleteStop(trip: Trip, stopId: string): Promise<boolean> {
   if (!stopIdSchema.safeParse(stopId).success) return false;
   const now = new Date();

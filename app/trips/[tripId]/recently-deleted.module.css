@@ -1,0 +1,65 @@
+.deleted {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deleted li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.what p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.detail,
+.when {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.restore {
+  /* Tall enough for a thumb. */
+  min-height: 44px;
+  padding: 8px 14px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.restore:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.restore:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}

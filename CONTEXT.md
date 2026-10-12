@@ -70,7 +70,7 @@ An Item with no date. Items with a date are listed under that day of their Stop,
 _Avoid_: Undated, backlog
 
 **Recently deleted**:
-Where a deleted Stop or Item stays, restorable, for 30 days before it is gone for good.
+Where a deleted Stop or Item stays, restorable, for 30 days before it is gone for good. Restoring a Stop brings back the Items that were deleted with it; an Item restored while its Stop is still deleted goes to the Trip as a whole.
 _Avoid_: Trash, bin, archive
 
 ### Money

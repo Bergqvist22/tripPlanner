@@ -1,16 +1,20 @@
 import { sql } from "drizzle-orm";
+import { GET as purgeDeleted } from "@/app/api/cron/purge-deleted/route";
 import { GET as readBudget } from "@/app/api/trips/[tripId]/budget/route";
 import { GET as readTripDays } from "@/app/api/trips/[tripId]/days/route";
+import { GET as readDeleted } from "@/app/api/trips/[tripId]/deleted/route";
 import * as legRoute from "@/app/api/trips/[tripId]/legs/[fromStopId]/[toStopId]/route";
 import { GET as readLegs } from "@/app/api/trips/[tripId]/legs/route";
 import { GET as readMap } from "@/app/api/trips/[tripId]/map/route";
 import { GET as searchPlaces } from "@/app/api/trips/[tripId]/places/route";
 import { GET as readWarnings } from "@/app/api/trips/[tripId]/warnings/route";
+import { POST as restoreItem } from "@/app/api/trips/[tripId]/items/[itemId]/restore/route";
 import * as itemRoute from "@/app/api/trips/[tripId]/items/[itemId]/route";
 import * as itemsRoute from "@/app/api/trips/[tripId]/items/route";
 import * as tripRoute from "@/app/api/trips/[tripId]/route";
 import { GET as readStopDays } from "@/app/api/trips/[tripId]/stops/[stopId]/days/route";
 import { GET as readCloseUp } from "@/app/api/trips/[tripId]/stops/[stopId]/map/route";
+import { POST as restoreStop } from "@/app/api/trips/[tripId]/stops/[stopId]/restore/route";
 import * as stopRoute from "@/app/api/trips/[tripId]/stops/[stopId]/route";
 import { PUT as reorderStops } from "@/app/api/trips/[tripId]/stops/order/route";
 import * as stopsRoute from "@/app/api/trips/[tripId]/stops/route";
@@ -110,6 +114,13 @@ export async function createdTripId(overrides: Record<string, unknown> = {}) {
   return trip.id;
 }
 
+// The scheduled job that purges what was deleted long ago, run as the
+// scheduler runs it: with the secret it was given, if any.
+export function runPurge(secret?: string) {
+  const headers = secret === undefined ? undefined : { authorization: `Bearer ${secret}` };
+  return purgeDeleted(new Request("http://localhost/api/cron/purge-deleted", { headers }));
+}
+
 // One traveller's browser: it keeps the cookies the server sets and sends
 // them back, so a Trip unlocked in one browser stays locked in another.
 export function browser() {
@@ -172,6 +183,9 @@ export function browser() {
     updateItem: (tripId: string, itemId: string, changes: unknown) =>
       send(itemRoute.PATCH, "PATCH", { tripId, itemId }, changes),
     deleteItem: (tripId: string, itemId: string) => send(itemRoute.DELETE, "DELETE", { tripId, itemId }),
+    readDeleted: (tripId: string) => send(readDeleted, "GET", { tripId }),
+    restoreStop: (tripId: string, stopId: string) => send(restoreStop, "POST", { tripId, stopId }),
+    restoreItem: (tripId: string, itemId: string) => send(restoreItem, "POST", { tripId, itemId }),
   };
 }
 

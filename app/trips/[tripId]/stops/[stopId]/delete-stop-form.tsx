@@ -30,6 +30,11 @@ export function DeleteStopForm({ tripId, stop, itemCount }: { tripId: string; st
     }
   }
 
+  const itemsDeleted =
+    itemCount === 0
+      ? "It has no Items."
+      : `${itemCount === 1 ? "Its 1 Item is" : `Its ${itemCount} Items are`} deleted with it.`;
+
   if (!confirming) {
     return (
       <div className={styles.form}>
@@ -44,11 +49,7 @@ export function DeleteStopForm({ tripId, stop, itemCount }: { tripId: string; st
   return (
     <div className={styles.form} role="group" aria-label="Confirm deleting the Stop">
       <p className={styles.question}>Delete {stop.name} from the Route?</p>
-      {itemCount > 0 && (
-        <p className={styles.hint}>
-          {itemCount === 1 ? "Its 1 Item is" : `Its ${itemCount} Items are`} deleted with it.
-        </p>
-      )}
+      <p className={styles.hint}>{itemsDeleted} You can restore it from Recently deleted for 30 days.</p>
       {error && (
         <p className={styles.error} role="alert">
           {error}

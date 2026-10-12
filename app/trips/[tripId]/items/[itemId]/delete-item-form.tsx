@@ -45,6 +45,7 @@ export function DeleteItemForm({ tripId, item }: { tripId: string; item: Item })
   return (
     <div className={styles.form} role="group" aria-label="Confirm deleting the Item">
       <p className={styles.question}>Delete {item.title}?</p>
+      <p className={styles.hint}>You can restore it from Recently deleted for 30 days.</p>
       {error && (
         <p className={styles.error} role="alert">
           {error}
