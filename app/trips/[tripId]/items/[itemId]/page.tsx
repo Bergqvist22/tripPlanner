@@ -9,6 +9,7 @@ import { findItem } from "@/lib/items";
 import { STATUS_NAMES } from "@/lib/statuses";
 import { listStops } from "@/lib/stops";
 import { Section } from "@/app/section";
+import { KeepOfflineCopy } from "../../keep-offline-copy";
 import styles from "../../page.module.css";
 import { StatusPicker } from "../../status-picker";
 import { listedOn } from "../listed-on";
@@ -45,6 +46,7 @@ async function Item({ params }: Pick<Props, "params">) {
 
   return (
     <>
+      <KeepOfflineCopy tripId={trip.id} loadedAt={new Date().toISOString()} />
       <Link className={styles.back} href={listedOn(trip.id, item.stopId)}>
         ← {stop?.name ?? trip.name}
       </Link>

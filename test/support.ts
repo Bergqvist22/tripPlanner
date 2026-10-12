@@ -6,6 +6,7 @@ import { GET as readDeleted } from "@/app/api/trips/[tripId]/deleted/route";
 import * as legRoute from "@/app/api/trips/[tripId]/legs/[fromStopId]/[toStopId]/route";
 import { GET as readLegs } from "@/app/api/trips/[tripId]/legs/route";
 import { GET as readMap } from "@/app/api/trips/[tripId]/map/route";
+import { GET as readOfflineCopy } from "@/app/api/trips/[tripId]/offline-copy/route";
 import { GET as searchPlaces } from "@/app/api/trips/[tripId]/places/route";
 import { GET as readWarnings } from "@/app/api/trips/[tripId]/warnings/route";
 import { POST as restoreItem } from "@/app/api/trips/[tripId]/items/[itemId]/restore/route";
@@ -159,6 +160,7 @@ export function browser() {
     updateTrip: (tripId: string, changes: unknown) => send(tripRoute.PATCH, "PATCH", { tripId }, changes),
     readBudget: (tripId: string) => send(readBudget, "GET", { tripId }),
     readMap: (tripId: string) => send(readMap, "GET", { tripId }),
+    readOfflineCopy: (tripId: string) => send(readOfflineCopy, "GET", { tripId }),
     readTripDays: (tripId: string) => send(readTripDays, "GET", { tripId }),
     readStopDays: (tripId: string, stopId: string) => send(readStopDays, "GET", { tripId, stopId }),
     readCloseUp: (tripId: string, stopId: string) => send(readCloseUp, "GET", { tripId, stopId }),

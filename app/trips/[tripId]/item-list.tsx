@@ -13,14 +13,14 @@ import styles from "./item-list.module.css";
 
 // The price as the Item has it and, for one in another currency, what that
 // comes to in the display currency.
-function itemCost({ cost, currency, costBasis }: Item, displayCost: string | undefined) {
+export function itemCost({ cost, currency, costBasis }: Item, displayCost: string | undefined) {
   if (cost === null) return undefined;
   const price = [formattedCost(cost, currency), displayCost].filter(Boolean).join(" ≈ ");
   return `${price} ${costBasis === "total" ? "total" : "per person"}`;
 }
 
 // The day the Item is on, and when on it, as far as they are known.
-function itemDates({ category, date, time, endDate }: Item) {
+export function itemDates({ category, date, time, endDate }: Item) {
   const at = time ? ` at ${time}` : "";
   if (category === "accommodation" && date && endDate) {
     return `Check-in ${formattedDate(date)}${at} · Check-out ${formattedDate(endDate)}`;

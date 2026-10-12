@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { openTrip, unlockCookieName } from "@/lib/access";
 import { CURRENCIES } from "@/lib/currency";
 import { listStops } from "@/lib/stops";
+import { KeepOfflineCopy } from "../../keep-offline-copy";
 import styles from "../../page.module.css";
 import { listedOn } from "../listed-on";
 import { NewItemForm } from "./new-item-form";
@@ -39,6 +40,7 @@ async function NewItem({ params, searchParams }: Props) {
 
   return (
     <>
+      <KeepOfflineCopy tripId={trip.id} loadedAt={new Date().toISOString()} />
       <Link className={styles.back} href={listedOn(trip.id, stop?.id ?? null)}>
         ← {stop?.name ?? trip.name}
       </Link>

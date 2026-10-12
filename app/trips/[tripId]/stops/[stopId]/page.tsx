@@ -10,6 +10,7 @@ import { listStops } from "@/lib/stops";
 import { isAbout, warningsOf } from "@/lib/warnings";
 import { Section } from "@/app/section";
 import { ItemSections } from "../../item-sections";
+import { KeepOfflineCopy } from "../../keep-offline-copy";
 import { stopDates, stopNights } from "../../stop-dates";
 import { WarningList } from "../../warning-list";
 import styles from "../../page.module.css";
@@ -50,6 +51,7 @@ async function Stop({ params }: Pick<Props, "params">) {
 
   return (
     <>
+      <KeepOfflineCopy tripId={trip.id} loadedAt={new Date().toISOString()} />
       <Link className={styles.back} href={`/trips/${trip.id}`}>
         ← {trip.name}
       </Link>

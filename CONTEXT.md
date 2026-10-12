@@ -102,3 +102,7 @@ _Avoid_: Session, login, sign in
 **Creator name**:
 The free-text name of whoever created a Trip, shown on the home page. It identifies nobody and grants nothing.
 _Avoid_: Owner, user, author
+
+**Offline copy**:
+The last version of an unlocked Trip that a device loaded, kept on that device and shown when there is no connection. It is for reading only, says how old it is, and is replaced each time the Trip is loaded again.
+_Avoid_: Cache, snapshot, offline mode

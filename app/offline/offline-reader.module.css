@@ -1,0 +1,97 @@
+.notice {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius);
+}
+
+.notice p {
+  margin: 0;
+}
+
+.notice strong {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.15rem;
+}
+
+.again {
+  /* Tall enough for a thumb. */
+  min-height: 44px;
+  padding: 8px 14px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A Stop in the Route, under the Leg that leads to it. */
+.stop {
+  display: grid;
+  gap: 10px;
+}
+
+.entry {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+
+.entry p,
+.entry dl,
+.entry dd {
+  margin: 0;
+}
+
+.entry h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+/* A Stop in the Route: the whole of it opens the Stop. */
+a.entry {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.entry:hover h3 {
+  color: var(--accent);
+}
+
+.muted,
+.leg,
+.entry dt {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.leg {
+  padding: 0 14px;
+}
+
+.entry dl {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.notes {
+  white-space: pre-wrap;
+}

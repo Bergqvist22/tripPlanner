@@ -1,0 +1,11 @@
+.offline {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  margin: 0;
+  padding: 10px var(--gutter);
+  font-weight: 600;
+  text-align: center;
+  color: var(--surface);
+  background: var(--danger);
+}

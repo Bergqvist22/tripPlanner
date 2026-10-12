@@ -18,6 +18,7 @@ import { AddStopForm } from "./add-stop-form";
 import { Budget } from "./budget";
 import { DeleteTripForm } from "./delete-trip-form";
 import { ItemSections } from "./item-sections";
+import { KeepOfflineCopy } from "./keep-offline-copy";
 import { RecentlyDeleted } from "./recently-deleted";
 import { RouteMap } from "./route-map";
 import { StopList } from "./stop-list";
@@ -51,6 +52,8 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
     if (!summary) notFound();
     return (
       <>
+        {/* Locked again: the offline copy kept on this device is let go. */}
+        <KeepOfflineCopy tripId={tripId} loadedAt={new Date().toISOString()} />
         <TripHeader name={summary.name} creatorName={summary.creatorName} />
         <Section className={styles.card} heading="This Trip is locked">
           <p className={styles.lead}>Enter the Trip password to open it. This browser will remember it.</p>
@@ -71,6 +74,7 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
   const warnings = warningsOf(stops, items);
   return (
     <>
+      <KeepOfflineCopy tripId={trip.id} loadedAt={new Date().toISOString()} />
       <TripHeader name={trip.name} creatorName={trip.creatorName} />
       <dl className={styles.facts}>
         <div>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Field } from "@/app/field";
 import styles from "@/app/form.module.css";
+import { dropCopy } from "@/app/offline/kept";
 
 export function DeleteTripForm({ tripId }: { tripId: string }) {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function DeleteTripForm({ tripId }: { tripId: string }) {
         body: JSON.stringify({ password: fields.get("deletePassword") }),
       });
       if (response.ok) {
+        dropCopy(tripId);
         router.replace("/");
         router.refresh();
         return;
