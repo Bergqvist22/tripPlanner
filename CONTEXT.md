@@ -92,11 +92,11 @@ Whether an Item's cost covers the whole group (a hotel room) or one traveller (a
 ### Access
 
 **Trip password**:
-The single password, set when a Trip is created, that everyone travelling shares to view and edit it. There are no accounts.
+The single password that everyone travelling shares to view and edit a Trip. It is optional and can only be set when the Trip is created: a Trip without one is open to everyone. There are no accounts.
 _Avoid_: Login, account, user
 
 **Unlock**:
-What a browser holds for a Trip after the Trip password has been given in it: the Trip stays open there across visits. A Trip without one is locked and shows only its name and creator name. An unlock is for one Trip and identifies nobody.
+What a browser holds for a Trip after the Trip password has been given in it: the Trip stays open there across visits. A Trip that has a Trip password is locked in a browser without an unlock, and shows only its name and creator name. An unlock is for one Trip and identifies nobody.
 _Avoid_: Session, login, sign in
 
 **Creator name**:
@@ -104,5 +104,5 @@ The free-text name of whoever created a Trip, shown on the home page. It identif
 _Avoid_: Owner, user, author
 
 **Offline copy**:
-The last version of an unlocked Trip that a device loaded, kept on that device and shown when there is no connection. It is for reading only, says how old it is, and is replaced each time the Trip is loaded again.
+The last version of a Trip that a device loaded, unlocked if it has a Trip password, kept on that device and shown when there is no connection. It is for reading only, says how old it is, and is replaced each time the Trip is loaded again.
 _Avoid_: Cache, snapshot, offline mode

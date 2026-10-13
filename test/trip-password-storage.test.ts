@@ -20,3 +20,11 @@ test("a Trip password is stored only as a salted hash", async () => {
   // Same password, different salt, different hash.
   expect(first).not.toBe(second);
 });
+
+test("a Trip without a Trip password stores none", async () => {
+  await createTrip({ password: undefined });
+
+  const [stored] = await db().select().from(trips);
+
+  expect(stored.passwordHash).toBeNull();
+});

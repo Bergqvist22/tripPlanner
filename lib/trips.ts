@@ -32,11 +32,13 @@ const tripDetailsSchema = z.object({
 });
 
 const newTripSchema = tripDetailsSchema.extend({
-  // Not trimmed: the Trip password is kept exactly as typed.
+  // Left out or empty, the Trip has no Trip password and is open to everyone.
+  // Not trimmed: a Trip password is kept exactly as typed.
   password: z
-    .string({ error: "Choose a Trip password" })
+    .string({ error: "The Trip password must be text" })
     .max(PASSWORD_MAX_LENGTH)
-    .refine((password) => password.trim() !== "", "Choose a Trip password"),
+    .refine((password) => password === "" || password.trim() !== "", "A Trip password cannot be only spaces")
+    .nullish(),
 });
 
 // Only the details that are sent are changed. The Trip password is not among
@@ -67,14 +69,14 @@ export function parseTripChanges(input: unknown): { changes: TripChanges } | { e
   return result.success ? { changes: result.data } : { errors: fieldErrors(result.error) };
 }
 
-// What anyone may see of a Trip without its Trip password (ADR 0002).
+// What anyone may see of a Trip, whether or not it has a Trip password (ADR 0002).
 export type TripSummary = { id: string; name: string; creatorName: string };
 
 export async function createTrip(input: NewTrip): Promise<TripSummary> {
   const { password, ...trip } = input;
   const [created] = await db()
     .insert(trips)
-    .values({ ...trip, passwordHash: await hashPassword(password) })
+    .values({ ...trip, passwordHash: password ? await hashPassword(password) : null })
     .returning({ id: trips.id, name: trips.name, creatorName: trips.creatorName });
   return created;
 }
@@ -86,8 +88,8 @@ export function listTrips(): Promise<TripSummary[]> {
     .orderBy(asc(trips.createdAt));
 }
 
-// What a Trip holds behind its Trip password.
-export type Trip = TripSummary & { travellerCount: number; displayCurrency: string };
+// What a Trip holds, behind its Trip password if it has one.
+export type Trip = TripSummary & { travellerCount: number; displayCurrency: string; hasPassword: boolean };
 
 const tripIdSchema = z.uuid();
 
@@ -106,8 +108,8 @@ export async function findTripSummary(id: string): Promise<TripSummary | undefin
   return stored && { id: stored.id, name: stored.name, creatorName: stored.creatorName };
 }
 
-export function tripContents({ id, name, creatorName, travellerCount, displayCurrency }: StoredTrip): Trip {
-  return { id, name, creatorName, travellerCount, displayCurrency };
+export function tripContents({ id, name, creatorName, travellerCount, displayCurrency, passwordHash }: StoredTrip): Trip {
+  return { id, name, creatorName, travellerCount, displayCurrency, hasPassword: passwordHash !== null };
 }
 
 // For a Trip that has already been opened (lib/access.ts).

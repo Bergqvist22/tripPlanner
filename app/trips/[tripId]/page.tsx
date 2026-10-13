@@ -47,7 +47,7 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
   const opened = await openTrip(tripId, unlock);
 
   if ("refused" in opened) {
-    // Without the Trip password only the name and creator name are shown.
+    // Locked, the Trip shows only its name and creator name.
     const summary = await findTripSummary(tripId);
     if (!summary) notFound();
     return (
@@ -139,9 +139,10 @@ async function Trip({ params }: Pick<PageProps<"/trips/[tripId]">, "params">) {
           )}
           <Section className={styles.card} heading="Delete this Trip">
             <p className={styles.lead}>
-              This removes the Trip and everything in it for good. Enter the Trip password to confirm.
+              This removes the Trip and everything in it for good.
+              {trip.hasPassword && " Enter the Trip password to confirm."}
             </p>
-            <DeleteTripForm tripId={trip.id} />
+            <DeleteTripForm trip={trip} />
           </Section>
         </div>
       </div>

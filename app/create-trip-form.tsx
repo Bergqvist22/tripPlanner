@@ -54,9 +54,9 @@ export function CreateTripForm({ currencies }: { currencies: readonly string[] }
       <Field
         label="Trip password"
         error={errors.password}
-        hint="Share it with everyone travelling. It cannot be recovered if lost."
+        hint="Optional. With one, only those you share it with can open the Trip, and it cannot be recovered if lost. Without one, anyone can open and change the Trip."
       >
-        <input name="password" type="password" required maxLength={200} autoComplete="new-password" />
+        <input name="password" type="password" maxLength={200} autoComplete="new-password" />
       </Field>
       <div className={styles.row}>
         <Field label="Travellers" error={errors.travellerCount}>

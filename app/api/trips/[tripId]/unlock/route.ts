@@ -6,5 +6,6 @@ export async function POST(request: Request, { params }: RouteContext<"/api/trip
   const body = await request.json().catch(() => undefined);
   const unlocked = await unlockTrip(tripId, body?.password);
   if ("refused" in unlocked) return refusedResponse(unlocked);
-  return Response.json({ unlocked: true }, { headers: { "set-cookie": unlocked.unlockCookie } });
+  const headers = unlocked.unlockCookie === undefined ? undefined : { "set-cookie": unlocked.unlockCookie };
+  return Response.json({ unlocked: true }, { headers });
 }

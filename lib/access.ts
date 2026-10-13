@@ -5,8 +5,15 @@ import { trips } from "@/db/schema";
 import { verifyPassword } from "./password";
 import { findStoredTrip, tripContents, type StoredTrip, type Trip } from "./trips";
 
-// Access to a Trip's contents (ADR 0002). A browser that has given the Trip
-// password holds an unlock: a signed cookie that is good for one Trip only.
+// Access to a Trip's contents (ADR 0002). A Trip without a Trip password is
+// open to everyone. For one that has a Trip password, a browser that has given
+// it holds an unlock: a signed cookie that is good for one Trip only.
+
+type TripWithPassword = StoredTrip & { passwordHash: string };
+
+function hasPassword(trip: StoredTrip): trip is TripWithPassword {
+  return trip.passwordHash !== null;
+}
 
 const UNLOCK_LIFETIME_SECONDS = 180 * 24 * 60 * 60;
 
@@ -17,12 +24,12 @@ export function unlockCookieName(tripId: string) {
 // The signing key is the Trip's password hash, which never leaves the server.
 // An unlock therefore cannot be moved to another Trip, and stops working when
 // the operator resets the Trip password.
-function signature(trip: StoredTrip, expiresAt: number) {
+function signature(trip: TripWithPassword, expiresAt: number) {
   return createHmac("sha256", trip.passwordHash).update(`${trip.id}.${expiresAt}`).digest("hex");
 }
 
 // The Set-Cookie header that unlocks the Trip in the browser receiving it.
-function unlockCookie(trip: StoredTrip) {
+function unlockCookie(trip: TripWithPassword) {
   const expiresAt = Math.floor(Date.now() / 1000) + UNLOCK_LIFETIME_SECONDS;
   const attributes = [
     `${unlockCookieName(trip.id)}=${expiresAt}.${signature(trip, expiresAt)}`,
@@ -35,7 +42,7 @@ function unlockCookie(trip: StoredTrip) {
   return attributes.join("; ");
 }
 
-function isValidUnlock(trip: StoredTrip, unlock: string | undefined) {
+function isValidUnlock(trip: TripWithPassword, unlock: string | undefined) {
   const [expires, signed] = (unlock ?? "").split(".");
   const expiresAt = Number(expires);
   if (!signed || !Number.isInteger(expiresAt) || expiresAt * 1000 <= Date.now()) return false;
@@ -53,9 +60,12 @@ export type Refused = { refused: Refusal; retryAfterSeconds?: number };
 const WRONG_PASSWORD_LIMIT = 5;
 const WRONG_PASSWORD_WINDOW_MS = 15 * 60 * 1000;
 
-// Checks a Trip password, whether for unlocking the Trip or deleting it.
+// Checks a Trip password, whether for unlocking the Trip or deleting it. A
+// Trip without one asks for none, so nothing given for it is wrong.
 async function checkTripPassword(tripId: string, password: unknown): Promise<{ trip: StoredTrip } | Refused> {
-  if (!(await findStoredTrip(tripId))) return { refused: "not-found" };
+  const stored = await findStoredTrip(tripId);
+  if (!stored) return { refused: "not-found" };
+  if (!hasPassword(stored)) return { trip: stored };
 
   const now = Date.now();
   const windowOver = or(
@@ -80,30 +90,35 @@ async function checkTripPassword(tripId: string, password: unknown): Promise<{ t
     return { refused: "too-many-attempts", retryAfterSeconds: Math.max(1, Math.ceil((windowEnds - now) / 1000)) };
   }
 
-  if (typeof password !== "string" || !(await verifyPassword(password, trip.passwordHash))) {
+  if (typeof password !== "string" || !(await verifyPassword(password, stored.passwordHash))) {
     return { refused: "wrong-password" };
   }
   await db().update(trips).set({ wrongPasswordCount: 0, wrongPasswordsSince: null }).where(eq(trips.id, tripId));
   return { trip };
 }
 
-export async function unlockTrip(tripId: string, password: unknown): Promise<{ unlockCookie: string } | Refused> {
+// A Trip without a Trip password has nothing to unlock, and sets no cookie.
+export async function unlockTrip(
+  tripId: string,
+  password: unknown,
+): Promise<{ unlockCookie: string | undefined } | Refused> {
   const checked = await checkTripPassword(tripId, password);
   if ("refused" in checked) return checked;
-  return { unlockCookie: unlockCookie(checked.trip) };
+  return { unlockCookie: hasPassword(checked.trip) ? unlockCookie(checked.trip) : undefined };
 }
 
-// The Trip's contents, for a browser holding a valid unlock for this Trip.
-// Every read and write of Trip contents starts here.
+// The Trip's contents, for a browser holding a valid unlock for this Trip, or
+// for any browser when the Trip has no Trip password. Every read and write of
+// Trip contents starts here.
 export async function openTrip(tripId: string, unlock: string | undefined): Promise<{ trip: Trip } | Refused> {
   const trip = await findStoredTrip(tripId);
   if (!trip) return { refused: "not-found" };
-  if (!isValidUnlock(trip, unlock)) return { refused: "locked" };
+  if (hasPassword(trip) && !isValidUnlock(trip, unlock)) return { refused: "locked" };
   return { trip: tripContents(trip) };
 }
 
-// Deleting a Trip takes its Trip password again, on top of the unlock, and is
-// permanent: the Trip's Stops and Items go with it.
+// Deleting a Trip takes its Trip password again, on top of the unlock, when it
+// has one, and is permanent: the Trip's Stops and Items go with it.
 export async function deleteTrip(
   tripId: string,
   unlock: string | undefined,

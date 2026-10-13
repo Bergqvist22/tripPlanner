@@ -40,7 +40,8 @@ export const trips = pgTable(
     id: uuid().primaryKey().defaultRandom(),
     name: text().notNull(),
     creatorName: text().notNull(),
-    passwordHash: text().notNull(),
+    // A Trip without a Trip password has none: it is open to everyone.
+    passwordHash: text(),
     travellerCount: integer().notNull(),
     displayCurrency: text().notNull(),
     // Rate limiting of unlock attempts: how many wrong Trip passwords have

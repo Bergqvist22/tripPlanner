@@ -18,7 +18,14 @@ describe("changing a Trip", () => {
       displayCurrency: "USD",
     });
 
-    const changed = { id: tripId, name: "Highway 1", creatorName: "Emil B", travellerCount: 5, displayCurrency: "USD" };
+    const changed = {
+      id: tripId,
+      name: "Highway 1",
+      creatorName: "Emil B",
+      travellerCount: 5,
+      displayCurrency: "USD",
+      hasPassword: true,
+    };
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ trip: changed });
     expect(await tripAsRead(emil, tripId)).toEqual(changed);
@@ -36,6 +43,7 @@ describe("changing a Trip", () => {
       creatorName: "Emil",
       travellerCount: 6,
       displayCurrency: "SEK",
+      hasPassword: true,
     });
   });
 

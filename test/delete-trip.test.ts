@@ -35,6 +35,15 @@ describe("deleting a Trip", () => {
     expect((await emil.readTrip(tripId)).status).toBe(200);
   });
 
+  test("without a Trip password takes none, from any browser", async () => {
+    const tripId = await createdTripId({ password: undefined });
+
+    const response = await browser().deleteTrip(tripId, undefined);
+
+    expect(response.status).toBe(204);
+    expect((await listTrips()).trips).toEqual([]);
+  });
+
   test("is rate limited like unlocking when the password keeps being wrong", async () => {
     const { tripId, emil } = await unlockedTrip();
     for (let attempt = 0; attempt < 5; attempt++) await emil.deleteTrip(tripId, `guess-${attempt}`);

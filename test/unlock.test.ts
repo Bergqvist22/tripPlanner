@@ -26,6 +26,7 @@ describe("unlocking a Trip", () => {
         creatorName: "Emil",
         travellerCount: 4,
         displayCurrency: "SEK",
+        hasPassword: true,
       },
     });
   });
@@ -107,5 +108,38 @@ describe("a Trip's contents", () => {
     emil.cookies.set(name, `${Number(expiresAt) + 365 * 24 * 60 * 60}.${signature}`);
 
     expect((await emil.readTrip(tripId)).status).toBe(401);
+  });
+});
+
+describe("a Trip without a Trip password", () => {
+  test.each([undefined, null, ""])("created with %j for one is open to every browser", async (password) => {
+    const tripId = await createdTripId({ password });
+    const stranger = browser();
+
+    const read = await stranger.readTrip(tripId);
+    expect(read.status).toBe(200);
+    expect((await read.json()).trip).toMatchObject({ id: tripId, hasPassword: false });
+
+    expect((await stranger.updateTrip(tripId, { name: "Highway 1" })).status).toBe(200);
+    expect((await stranger.addStop(tripId, { name: "Monterey" })).status).toBe(201);
+    expect((await browser().listStops(tripId)).status).toBe(200);
+  });
+
+  test("has nothing to unlock", async () => {
+    const tripId = await createdTripId({ password: undefined });
+
+    const response = await browser().unlock(tripId, "golden-gate");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.getSetCookie()).toEqual([]);
+  });
+
+  test("leaves a Trip that has one locked", async () => {
+    const open = await createdTripId({ name: "Weekend in Oslo", password: undefined });
+    const locked = await createdTripId({ name: "California road trip", password: "golden-gate" });
+    const stranger = browser();
+    await stranger.unlock(open, "golden-gate");
+
+    expect((await stranger.readTrip(locked)).status).toBe(401);
   });
 });

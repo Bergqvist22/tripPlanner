@@ -53,9 +53,18 @@ describe("creating a Trip", () => {
     expect(response.status).toBe(201);
   });
 
-  test.each(["name", "creatorName", "password"])("is refused without a %s", async (field) => {
+  test.each(["name", "creatorName"])("is refused without a %s", async (field) => {
     await expectRejected({ [field]: undefined }, field);
     await expectRejected({ [field]: "   " }, field);
+  });
+
+  test.each([undefined, null, ""])("takes no Trip password when the one given is %j", async (password) => {
+    const response = await createTrip({ password });
+    expect(response.status).toBe(201);
+  });
+
+  test.each(["   ", 42])("is refused with %j for a Trip password", async (password) => {
+    await expectRejected({ password }, "password");
   });
 
   test("is refused when the request is not JSON", async () => {
