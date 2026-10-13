@@ -3,12 +3,14 @@ import { db } from "@/db/client";
 import { items, legs, stops } from "@/db/schema";
 import { z } from "zod";
 import { optionalPlace, type Place } from "./place-search";
-import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
+import { fieldErrors, optionalDate, optionalTime, requiredText, type FieldErrors, type Trip } from "./trips";
 
 const stopDetailsSchema = z.object({
   name: requiredText("Give the Stop a name"),
   arrivalDate: optionalDate("Enter a valid arrival date"),
+  arrivalTime: optionalTime,
   departureDate: optionalDate("Enter a valid departure date"),
+  departureTime: optionalTime,
   notes: z.string({ error: "Notes must be text" }).max(10_000, "Notes can be at most 10,000 characters"),
   place: optionalPlace,
 });
@@ -21,13 +23,34 @@ function nights({ arrivalDate, departureDate }: StopDates) {
   return Math.round((Date.parse(departureDate) - Date.parse(arrivalDate)) / (24 * 60 * 60 * 1000));
 }
 
-function departsBeforeArriving(dates: StopDates) {
-  return (nights(dates) ?? 0) < 0;
+type StopTimes = { arrivalTime?: string | null; departureTime?: string | null };
+
+// Stored to the second, which nobody plans by.
+function toTheMinute(time: string | null | undefined) {
+  return time ? time.slice(0, 5) : null;
 }
 
-const DEPARTURE_BEFORE_ARRIVAL: FieldErrors = { departureDate: "Departure cannot be before arrival" };
+// What is wrong with when the Stop is left, if it is before it is reached.
+// The times only say so on a Stop left on the day of arrival.
+function departsBeforeArriving(stop: StopDates & StopTimes): FieldErrors | undefined {
+  const stayed = nights(stop);
+  if (stayed === null) return undefined;
+  if (stayed < 0) return { departureDate: "Departure cannot be before arrival" };
+  const [arrives, leaves] = [toTheMinute(stop.arrivalTime), toTheMinute(stop.departureTime)];
+  if (stayed === 0 && arrives && leaves && leaves < arrives) {
+    return { departureTime: "Departure cannot be before arrival" };
+  }
+  return undefined;
+}
 
-const newStopSchema = stopDetailsSchema.partial({ arrivalDate: true, departureDate: true, notes: true, place: true });
+const newStopSchema = stopDetailsSchema.partial({
+  arrivalDate: true,
+  arrivalTime: true,
+  departureDate: true,
+  departureTime: true,
+  notes: true,
+  place: true,
+});
 
 // Only the details that are sent are changed.
 const stopChangesSchema = stopDetailsSchema.partial();
@@ -39,24 +62,27 @@ export function parseNewStop(input: unknown): { stop: NewStop } | { errors: Fiel
   const result = newStopSchema.safeParse(input);
   if (!result.success) return { errors: fieldErrors(result.error) };
   const { arrivalDate = null, departureDate = null } = result.data;
-  if (departsBeforeArriving({ arrivalDate, departureDate })) return { errors: DEPARTURE_BEFORE_ARRIVAL };
-  return { stop: result.data };
+  const errors = departsBeforeArriving({ ...result.data, arrivalDate, departureDate });
+  return errors ? { errors } : { stop: result.data };
 }
 
-// Whether the dates still fit the ones the Stop already has is checked when
-// the changes are made (updateStop).
+// Whether the dates and times still fit the ones the Stop already has is
+// checked when the changes are made (updateStop).
 export function parseStopChanges(input: unknown): { changes: StopChanges } | { errors: FieldErrors } {
   const result = stopChangesSchema.safeParse(input);
   return result.success ? { changes: result.data } : { errors: fieldErrors(result.error) };
 }
 
 // A Stop as travellers see it. Dates are calendar dates (YYYY-MM-DD); nights
-// is known once both are. A Stop without a place is left off the map.
+// is known once both are. The times are of day (HH:MM), in no time zone: what
+// the clock shows there. A Stop without a place is left off the map.
 export type Stop = {
   id: string;
   name: string;
   arrivalDate: string | null;
+  arrivalTime: string | null;
   departureDate: string | null;
+  departureTime: string | null;
   nights: number | null;
   notes: string;
   place: Place | null;
@@ -64,7 +90,17 @@ export type Stop = {
 
 export function stopContents(stored: typeof stops.$inferSelect): Stop {
   const { id, name, arrivalDate, departureDate, notes } = stored;
-  return { id, name, arrivalDate, departureDate, nights: nights({ arrivalDate, departureDate }), notes, place: placeIn(stored) };
+  return {
+    id,
+    name,
+    arrivalDate,
+    arrivalTime: toTheMinute(stored.arrivalTime),
+    departureDate,
+    departureTime: toTheMinute(stored.departureTime),
+    nights: nights({ arrivalDate, departureDate }),
+    notes,
+    place: placeIn(stored),
+  };
 }
 
 type PlaceColumns = { placeLabel: string | null; placeLatitude: number | null; placeLongitude: number | null };
@@ -150,7 +186,8 @@ export async function updateStop(
     // Locked, so the dates cannot change between the check and the write.
     const [stored] = await tx.select().from(stops).where(isStopOf(trip, stopId)).for("update");
     if (!stored) return undefined;
-    if (departsBeforeArriving({ ...stored, ...changes })) return { errors: DEPARTURE_BEFORE_ARRIVAL };
+    const errors = departsBeforeArriving({ ...stored, ...changes });
+    if (errors) return { errors };
     if (Object.keys(changes).length === 0) return { stop: stopContents(stored) };
     const { place, ...details } = changes;
     // A drive calculated to or from where the Stop was says nothing about

@@ -28,7 +28,9 @@ describe("adding a Stop", () => {
       id: expect.any(String),
       name: "San Francisco",
       arrivalDate: null,
+      arrivalTime: null,
       departureDate: null,
+      departureTime: null,
       nights: null,
       notes: "",
       place: null,
@@ -83,12 +85,53 @@ describe("adding a Stop", () => {
     expect(stop).toMatchObject({ arrivalDate: "2027-07-02", departureDate: null, nights: null });
   });
 
+  test("can say at what time it is reached and left", async () => {
+    const { tripId, emil } = await unlockedTrip();
+
+    const stop = await addedStop(emil, tripId, {
+      name: "Monterey",
+      arrivalDate: "2027-07-02",
+      arrivalTime: "14:30",
+      departureDate: "2027-07-04",
+      departureTime: "09:00",
+    });
+
+    expect(stop).toMatchObject({ arrivalTime: "14:30", departureTime: "09:00", nights: 2 });
+    expect(await stopsAsListed(emil, tripId)).toEqual([stop]);
+  });
+
+  test("with zero nights can be left at the time it is reached", async () => {
+    const { tripId, emil } = await unlockedTrip();
+
+    const stop = await addedStop(emil, tripId, {
+      name: "Big Sur",
+      arrivalDate: "2027-07-02",
+      arrivalTime: "12:00",
+      departureDate: "2027-07-02",
+      departureTime: "12:00",
+    });
+
+    expect(stop).toMatchObject({ arrivalTime: "12:00", departureTime: "12:00", nights: 0 });
+  });
+
   test.each([
     ["name", { name: "   " }],
     ["name", {}],
     ["arrivalDate", { name: "Monterey", arrivalDate: "2 July" }],
     ["departureDate", { name: "Monterey", departureDate: "2027-02-30" }],
     ["departureDate", { name: "Monterey", arrivalDate: "2027-07-03", departureDate: "2027-07-02" }],
+    ["arrivalTime", { name: "Monterey", arrivalTime: "half past two" }],
+    ["departureTime", { name: "Monterey", departureTime: "24:00" }],
+    [
+      "departureTime",
+      {
+        name: "Big Sur",
+        arrivalDate: "2027-07-02",
+        arrivalTime: "13:00",
+        departureDate: "2027-07-02",
+        departureTime: "12:00",
+      },
+    ],
   ])("is refused with a bad %s: %j", async (field, stop) => {
     const { tripId, emil } = await unlockedTrip();
 
@@ -178,14 +221,16 @@ describe("opening a Stop", () => {
 });
 
 describe("editing a Stop", () => {
-  test("changes its name, dates and notes", async () => {
+  test("changes its name, dates, times and notes", async () => {
     const { tripId, emil } = await unlockedTrip();
     const stop = await addedStop(emil, tripId, { name: "Montery" });
 
     const response = await emil.updateStop(tripId, stop.id, {
       name: "Monterey",
       arrivalDate: "2027-07-02",
+      arrivalTime: "14:30",
       departureDate: "2027-07-04",
+      departureTime: "09:00",
       notes: "Aquarium opens at 10.\nBook the whale watching early.",
     });
 
@@ -193,7 +238,9 @@ describe("editing a Stop", () => {
       id: stop.id,
       name: "Monterey",
       arrivalDate: "2027-07-02",
+      arrivalTime: "14:30",
       departureDate: "2027-07-04",
+      departureTime: "09:00",
       nights: 2,
       notes: "Aquarium opens at 10.\nBook the whale watching early.",
       place: null,
@@ -238,6 +285,37 @@ describe("editing a Stop", () => {
       departureDate: null,
       nights: null,
     });
+  });
+
+  test("can take a time away again", async () => {
+    const { tripId, emil } = await unlockedTrip();
+    const stop = await addedStop(emil, tripId, { name: "Monterey", arrivalDate: "2027-07-02", arrivalTime: "14:30" });
+
+    await emil.updateStop(tripId, stop.id, { arrivalTime: null });
+
+    expect(await stopAsRead(emil, tripId, stop.id)).toMatchObject({ arrivalDate: "2027-07-02", arrivalTime: null });
+  });
+
+  test("holds a new time against the dates and times the Stop already has", async () => {
+    const { tripId, emil } = await unlockedTrip();
+    const stop = await addedStop(emil, tripId, {
+      name: "Big Sur",
+      arrivalDate: "2027-07-02",
+      arrivalTime: "12:00",
+      departureDate: "2027-07-02",
+    });
+
+    const early = await emil.updateStop(tripId, stop.id, { departureTime: "11:00" });
+    expect(early.status).toBe(400);
+    expect((await early.json()).errors.departureTime).toEqual(expect.any(String));
+
+    // Leaving at the minute of arrival is no earlier than arriving.
+    const atOnce = await emil.updateStop(tripId, stop.id, { departureTime: "12:00" });
+    expect(atOnce.status).toBe(200);
+
+    // The times are of different days once the Stop has a night.
+    await emil.updateStop(tripId, stop.id, { departureDate: "2027-07-03", departureTime: "08:00" });
+    expect(await stopAsRead(emil, tripId, stop.id)).toMatchObject({ departureTime: "08:00", nights: 1 });
   });
 
   test("does not move it on the Route", async () => {

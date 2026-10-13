@@ -11,7 +11,7 @@ One journey being planned, made up of an ordered list of Stops plus Items that s
 _Avoid_: Destination, journey, plan
 
 **Stop**:
-A place on the Trip's route with an arrival and departure date. A Stop may have zero nights (a lunch break along the way). The Stop owns its dates; Items under it do not define them.
+A place on the Trip's route with an arrival and departure date, each with an optional time of day. A Stop may have zero nights (a lunch break along the way). The Stop owns its dates and times; Items under it do not define them.
 _Avoid_: Destination, city, location, waypoint
 
 **Place**:

@@ -7,7 +7,7 @@ import { isCurrency } from "./currency";
 import { optionalPlace, type Place } from "./place-search";
 import type { Status } from "./statuses";
 import { placeColumns, placeIn, stopStaysOnRoute } from "./stops";
-import { fieldErrors, optionalDate, requiredText, type FieldErrors, type Trip } from "./trips";
+import { fieldErrors, optionalDate, optionalTime, requiredText, type FieldErrors, type Trip } from "./trips";
 
 // The cost column holds 10 digits before the decimal point and 2 after.
 const COST_MAX = 9_999_999_999.99;
@@ -35,12 +35,6 @@ const link = z
     context.issues.push({ code: "custom", message: "Enter a web address, like https://example.com", input: typed });
     return z.NEVER;
   });
-
-// A time of day as a clock shows it, from 00:00 to 23:59.
-const optionalTime = z
-  .string({ error: "Enter a valid time" })
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a valid time, like 14:30")
-  .nullable();
 
 const itemDetailsSchema = z.object({
   // No Stop means the Item sits on the Trip as a whole.

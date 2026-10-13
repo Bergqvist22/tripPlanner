@@ -10,6 +10,12 @@ export const requiredText = (message: string) => z.string({ error: message }).tr
 // A calendar date, or null for one that is not decided yet.
 export const optionalDate = (message: string) => z.iso.date(message).nullable();
 
+// A time of day as a clock shows it, from 00:00 to 23:59.
+export const optionalTime = z
+  .string({ error: "Enter a valid time" })
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a valid time, like 14:30")
+  .nullable();
+
 const tripDetailsSchema = z.object({
   name: requiredText("Give the Trip a name"),
   creatorName: requiredText("Enter your name"),

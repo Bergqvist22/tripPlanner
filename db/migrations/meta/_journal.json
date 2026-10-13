@@ -29,6 +29,13 @@
       "when": 1791745936414,
       "tag": "0003_leg_calculated_at",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791850475970,
+      "tag": "0004_stop_times",
+      "breakpoints": true
     }
   ]
 }

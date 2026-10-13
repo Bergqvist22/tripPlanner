@@ -34,25 +34,30 @@ test("a traveller lays out the Route of a Trip", async ({ page }) => {
   await page.getByRole("link", { name: /Monterey/ }).click();
   await expect(page.getByRole("heading", { name: "Monterey", level: 1 })).toBeVisible();
   await field(page, "Stop name").fill("Monterey Bay");
-  await field(page, "Arrival").fill("2027-07-02");
-  await field(page, "Departure").fill("2027-07-01");
+  await field(page, "Arrival", { exact: true }).fill("2027-07-02");
+  await field(page, "Departure", { exact: true }).fill("2027-07-01");
   // Each change is saved as it is made, and what is refused is said at once.
   await expect(page.getByText("Departure cannot be before arrival")).toBeVisible();
   await expect(page.getByText("Not everything is saved.")).toBeVisible();
   await expect(page.getByRole("button", { name: /save/i })).toHaveCount(0);
 
-  await field(page, "Departure").fill("2027-07-04");
+  await field(page, "Departure", { exact: true }).fill("2027-07-04");
   await field(page, "Notes").fill("Aquarium opens at 10.");
   await expect(page.getByText("Saved.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Monterey Bay", level: 1 })).toBeVisible();
   await expect(page.getByText("2 Jul 2027 – 4 Jul 2027 · 2 nights")).toBeVisible();
+  // The time of arrival and of departure can be given too.
+  await field(page, "Arrival time").fill("14:30");
+  await field(page, "Departure time").fill("09:00");
+  await expect(page.getByText("2 Jul 2027 at 14:30 – 4 Jul 2027 at 09:00 · 2 nights")).toBeVisible();
   await page.reload();
   await expect(field(page, "Notes")).toHaveValue("Aquarium opens at 10.");
+  await expect(field(page, "Arrival time")).toHaveValue("14:30");
 
   // The Trip page shows the Stops in order with dates and nights.
   await page.getByRole("link", { name: /California road trip/ }).click();
   await expect(route(page).nth(1)).toContainText("Monterey Bay");
-  await expect(route(page).nth(1)).toContainText("2 Jul 2027 – 4 Jul 2027");
+  await expect(route(page).nth(1)).toContainText("2 Jul 2027 at 14:30 – 4 Jul 2027 at 09:00");
   await expect(route(page).nth(1)).toContainText("2 nights");
   // Nothing is booked for those nights yet, which the Trip warns about.
   await expect(page.getByRole("region", { name: "Warnings" }).filter({ visible: true })).toContainText(

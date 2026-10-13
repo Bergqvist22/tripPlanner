@@ -24,10 +24,26 @@ export function formattedDay(date: string) {
   return weekdayDayMonthYear.format(new Date(date));
 }
 
-export function stopDates({ arrivalDate, departureDate }: Pick<Stop, "arrivalDate" | "departureDate">) {
-  if (arrivalDate && departureDate) return `${formattedDate(arrivalDate)} – ${formattedDate(departureDate)}`;
-  if (arrivalDate) return `Arrives ${formattedDate(arrivalDate)}`;
-  if (departureDate) return `Leaves ${formattedDate(departureDate)}`;
+// A day and when on it, as far as they are known.
+function dayAndTime(date: string | null, time: string | null | undefined) {
+  if (date) return time ? `${formattedDate(date)} at ${time}` : formattedDate(date);
+  return time ? `at ${time}` : undefined;
+}
+
+// When the Stop is reached and left. An offline copy kept before Stops had
+// times has none.
+export function stopDates({
+  arrivalDate,
+  arrivalTime,
+  departureDate,
+  departureTime,
+}: Pick<Stop, "arrivalDate" | "departureDate"> & Partial<Pick<Stop, "arrivalTime" | "departureTime">>) {
+  const arrives = dayAndTime(arrivalDate, arrivalTime);
+  const leaves = dayAndTime(departureDate, departureTime);
+  if (arrivalDate && departureDate) return `${arrives} – ${leaves}`;
+  if (arrives && leaves) return `Arrives ${arrives} · Leaves ${leaves}`;
+  if (arrives) return `Arrives ${arrives}`;
+  if (leaves) return `Leaves ${leaves}`;
   return "No dates yet";
 }
 
